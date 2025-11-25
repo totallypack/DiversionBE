@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36717.8 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Diversion", "Diversion.csproj", "{FCDA551B-3964-43D7-A228-03DA717B7510}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FCDA551B-3964-43D7-A228-03DA717B7510}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FCDA551B-3964-43D7-A228-03DA717B7510}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FCDA551B-3964-43D7-A228-03DA717B7510}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FCDA551B-3964-43D7-A228-03DA717B7510}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {766E4696-408D-4ECD-B6FA-DA696472952B}
+	EndGlobalSection
+EndGlobal
