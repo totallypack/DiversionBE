@@ -1,0 +1,31 @@
+﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Identity;
+
+namespace Diversion.Models
+{
+    public class Event
+    {
+        [Key]
+        public Guid Id { get; set; }
+
+        [Required]
+        public string OrganizerId { get; set; }
+        [Required]
+        public Guid InterestTagId { get; set; }
+        [Required]
+        public string Title { get; set; }
+        public string? Description { get; set; }
+        [Required]
+        public DateTime StartDateTime { get; set; }
+        [Required]
+        public DateTime EndDateTime { get; set; }
+        public string? Location { get; set; }
+        public bool RequiresRsvp { get; set; }
+        [Required]
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public IdentityUser Organizer {  get; set; }
+        public SubInterest InterestTag { get; set; }
+        public ICollection<EventAttendee> Attendees { get; set; }
+
+    }
+}
