@@ -7,8 +7,8 @@ namespace Diversion.DTOs
         public string? DisplayName { get; set; }
         public string? Bio { get; set; }
         public string? Location { get; set; }
-        public DateTime? DateOfBirth { get; set; }
-        public string? ProfilePictureUrl { get; set; }
+        public DateTime? DOB { get; set; }
+        public string? ProfilePicUrl { get; set; }
     }
 
     public class CreateUserProfileDto
@@ -16,8 +16,8 @@ namespace Diversion.DTOs
         public string? DisplayName { get; set; }
         public string? Bio { get; set; }
         public string? Location { get; set; }
-        public DateTime? DateOfBirth { get; set; }
-        public string? ProfilePictureUrl { get; set; }
+        public DateTime? DOB { get; set; }
+        public string? ProfilePicUrl { get; set; }
     }
 
     public class UpdateUserProfileDto
@@ -25,8 +25,8 @@ namespace Diversion.DTOs
         public string? DisplayName { get; set; }
         public string? Bio { get; set; }
         public string? Location { get; set; }
-        public DateTime? DateOfBirth { get; set; }
-        public string? ProfilePictureUrl { get; set; }
+        public DateTime? DOB { get; set; }
+        public string? ProfilePicUrl { get; set; }
     }
 
     public class UserProfileWithInterestsDto
@@ -36,8 +36,8 @@ namespace Diversion.DTOs
         public string? DisplayName { get; set; }
         public string? Bio { get; set; }
         public string? Location { get; set; }
-        public DateTime? DateOfBirth { get; set; }
-        public string? ProfilePictureUrl { get; set; }
+        public DateTime? DOB { get; set; }
+        public string? ProfilePicUrl { get; set; }
         public List<SubInterestDto> Interests { get; set; } = [];
     }
 }
