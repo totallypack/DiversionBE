@@ -1,4 +1,4 @@
-using Diversion.Data;
+using Diversion;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -49,7 +49,6 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Add CORS for React frontend
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
@@ -78,9 +77,9 @@ else
 app.UseHttpsRedirection();
 app.UseRouting();
 
-app.UseCors(); // Enable CORS
+app.UseCors();
 
-app.UseAuthentication(); // Must come before UseAuthorization
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
