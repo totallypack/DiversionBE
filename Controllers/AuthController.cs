@@ -1,16 +1,12 @@
 ﻿using Diversion.DTOs;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 
 namespace Diversion.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AuthController(UserManager<IdentityUser> userManager, IConfiguration configuration) : ControllerBase
+    public class AuthController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager) : ControllerBase
     {
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto model)
@@ -26,7 +22,6 @@ namespace Diversion.Controllers
                 });
             }
 
-            // Check if email already exists
             var existingUserByEmail = await userManager.FindByEmailAsync(model.Email);
             if (existingUserByEmail != null)
             {
@@ -37,7 +32,6 @@ namespace Diversion.Controllers
                 });
             }
 
-            // Check if username already exists
             var existingUserByUsername = await userManager.FindByNameAsync(model.Username);
             if (existingUserByUsername != null)
             {
@@ -48,7 +42,6 @@ namespace Diversion.Controllers
                 });
             }
 
-            // Create new user
             var user = new IdentityUser
             {
                 UserName = model.Username,
@@ -66,48 +59,63 @@ namespace Diversion.Controllers
                 });
             }
 
-            // Generate JWT token
-            var token = GenerateJwtToken(user);
-            var jwtSettings = configuration.GetSection("JwtSettings");
-            var expiryMinutes = int.Parse(jwtSettings["ExpiryInMinutes"]);
+            // Sign in the user after successful registration
+            await signInManager.SignInAsync(user, isPersistent: true);
 
             return Ok(new AuthResponseDto
             {
-                Token = token,
                 Username = user.UserName,
-                Email = user.Email,
-                Expiration = DateTime.UtcNow.AddMinutes(expiryMinutes)
+                Email = user.Email
             });
         }
 
-        private string GenerateJwtToken(IdentityUser user)
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDto model)
         {
-            var jwtSettings = configuration.GetSection("JwtSettings");
-            var secretKey = jwtSettings["SecretKey"];
-            var issuer = jwtSettings["Issuer"];
-            var audience = jwtSettings["Audience"];
-            var expiryMinutes = int.Parse(jwtSettings["ExpiryInMinutes"]);
-
-            var claims = new[]
+            if (!ModelState.IsValid)
             {
-                  new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-                  new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                  new Claim(JwtRegisteredClaimNames.UniqueName, user.UserName),
-                  new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-              };
+                return BadRequest(new ErrorResponseDto
+                {
+                    Message = "Validation failed",
+                    Errors = [.. ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)]
+                });
+            }
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var user = await userManager.FindByNameAsync(model.Username);
+            if (user == null)
+            {
+                return Unauthorized(new ErrorResponseDto
+                {
+                    Message = "Invalid username or password",
+                    Errors = []
+                });
+            }
 
-            var token = new JwtSecurityToken(
-                issuer: issuer,
-                audience: audience,
-                claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(expiryMinutes),
-                signingCredentials: credentials
-            );
+            var result = await signInManager.PasswordSignInAsync(user, model.Password, isPersistent: true, lockoutOnFailure: false);
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            if (!result.Succeeded)
+            {
+                return Unauthorized(new ErrorResponseDto
+                {
+                    Message = "Invalid username or password",
+                    Errors = []
+                });
+            }
+
+            return Ok(new AuthResponseDto
+            {
+                Username = user.UserName,
+                Email = user.Email
+            });
+        }
+
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            await signInManager.SignOutAsync();
+            return Ok(new { message = "Logged out successfully" });
         }
     }
 }
