@@ -4,6 +4,7 @@ using Diversion;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Diversion.Migrations
 {
     [DbContext(typeof(DiversionDbContext))]
-    partial class DiversionDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251207063939_ReplaceLocationWithCityAndState")]
+    partial class ReplaceLocationWithCityAndState
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -27,9 +30,6 @@ namespace Diversion.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("City")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -47,6 +47,9 @@ namespace Diversion.Migrations
                     b.Property<Guid>("InterestTagId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Location")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("MeetingUrl")
                         .HasColumnType("nvarchar(max)");
 
@@ -59,12 +62,6 @@ namespace Diversion.Migrations
 
                     b.Property<DateTime>("StartDateTime")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("State")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("StreetAddress")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Title")
                         .IsRequired()

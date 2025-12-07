@@ -14,7 +14,9 @@ namespace Diversion.DTOs
         public DateTime StartDateTime { get; set; }
         public DateTime EndDateTime { get; set; }
         public string? EventType { get; set; }
-        public string? Location { get; set; }
+        public string? StreetAddress { get; set; }
+        public string? City { get; set; }
+        public string? State { get; set; }
         public string? MeetingUrl { get; set; }
         public bool RequiresRsvp { get; set; }
         public DateTime CreatedAt { get; set; }
@@ -43,7 +45,13 @@ namespace Diversion.DTOs
         public string? EventType { get; set; }
 
         [StringLength(500)]
-        public string? Location { get; set; }
+        public string? StreetAddress { get; set; }
+
+        [StringLength(100)]
+        public string? City { get; set; }
+
+        [StringLength(100)]
+        public string? State { get; set; }
 
         [StringLength(500)]
         public string? MeetingUrl { get; set; }
@@ -69,7 +77,13 @@ namespace Diversion.DTOs
         public string? EventType { get; set; }
 
         [StringLength(500)]
-        public string? Location { get; set; }
+        public string? StreetAddress { get; set; }
+
+        [StringLength(100)]
+        public string? City { get; set; }
+
+        [StringLength(100)]
+        public string? State { get; set; }
 
         [StringLength(500)]
         public string? MeetingUrl { get; set; }
@@ -88,7 +102,9 @@ namespace Diversion.DTOs
         public DateTime StartDateTime { get; set; }
         public DateTime EndDateTime { get; set; }
         public string? EventType { get; set; }
-        public string? Location { get; set; }
+        public string? StreetAddress { get; set; }
+        public string? City { get; set; }
+        public string? State { get; set; }
         public string? MeetingUrl { get; set; }
         public bool RequiresRsvp { get; set; }
         public DateTime CreatedAt { get; set; }

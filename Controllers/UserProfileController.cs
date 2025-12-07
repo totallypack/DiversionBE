@@ -32,7 +32,8 @@ namespace Diversion.Controllers
                     UserId = up.UserId,
                     DisplayName = up.DisplayName,
                     Bio = up.Bio,
-                    Location = up.Location,
+                    City = up.City,
+                    State = up.State,
                     DOB = up.DOB,
                     ProfilePicUrl = up.ProfilePicUrl,
                     Interests = up.UserInterests.Select(ui => new SubInterestDto
@@ -68,7 +69,8 @@ namespace Diversion.Controllers
                 UserId = userId,
                 DisplayName = dto.DisplayName,
                 Bio = dto.Bio,
-                Location = dto.Location,
+                City = dto.City,
+                State = dto.State,
                 DOB = dto.DOB,
                 ProfilePicUrl = dto.ProfilePicUrl
             };
@@ -82,7 +84,8 @@ namespace Diversion.Controllers
                 UserId = profile.UserId,
                 DisplayName = profile.DisplayName,
                 Bio = profile.Bio,
-                Location = profile.Location,
+                City = profile.City,
+                State = profile.State,
                 DOB = profile.DOB,
                 ProfilePicUrl = profile.ProfilePicUrl
             };
@@ -107,8 +110,10 @@ namespace Diversion.Controllers
                 profile.DisplayName = dto.DisplayName;
             if (dto.Bio != null)
                 profile.Bio = dto.Bio;
-            if (dto.Location != null)
-                profile.Location = dto.Location;
+            if (dto.City != null)
+                profile.City = dto.City;
+            if (dto.State != null)
+                profile.State = dto.State;
             if (dto.DOB.HasValue)
                 profile.DOB = dto.DOB;
             if (dto.ProfilePicUrl != null)
