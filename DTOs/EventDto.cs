@@ -13,7 +13,9 @@ namespace Diversion.DTOs
         public string? Description { get; set; }
         public DateTime StartDateTime { get; set; }
         public DateTime EndDateTime { get; set; }
+        public string? EventType { get; set; }
         public string? Location { get; set; }
+        public string? MeetingUrl { get; set; }
         public bool RequiresRsvp { get; set; }
         public DateTime CreatedAt { get; set; }
     }
@@ -36,8 +38,15 @@ namespace Diversion.DTOs
         [Required]
         public DateTime EndDateTime { get; set; }
 
+        [Required]
+        [RegularExpression("^(Online|InPerson)$", ErrorMessage = "EventType must be either 'Online' or 'InPerson'")]
+        public string? EventType { get; set; }
+
         [StringLength(500)]
         public string? Location { get; set; }
+
+        [StringLength(500)]
+        public string? MeetingUrl { get; set; }
 
         public bool RequiresRsvp { get; set; } = false;
     }
@@ -56,8 +65,14 @@ namespace Diversion.DTOs
 
         public DateTime? EndDateTime { get; set; }
 
+        [RegularExpression("^(Online|InPerson)$", ErrorMessage = "EventType must be either 'Online' or 'InPerson'")]
+        public string? EventType { get; set; }
+
         [StringLength(500)]
         public string? Location { get; set; }
+
+        [StringLength(500)]
+        public string? MeetingUrl { get; set; }
 
         public bool? RequiresRsvp { get; set; }
     }
@@ -72,7 +87,9 @@ namespace Diversion.DTOs
         public string? Description { get; set; }
         public DateTime StartDateTime { get; set; }
         public DateTime EndDateTime { get; set; }
+        public string? EventType { get; set; }
         public string? Location { get; set; }
+        public string? MeetingUrl { get; set; }
         public bool RequiresRsvp { get; set; }
         public DateTime CreatedAt { get; set; }
         public List<EventAttendeeDto> Attendees { get; set; } = new();
