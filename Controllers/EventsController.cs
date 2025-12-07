@@ -14,7 +14,6 @@ namespace Diversion.Controllers
     {
         private readonly DiversionDbContext _context = context;
 
-        // GET: api/events
         [HttpGet]
         public async Task<ActionResult<IEnumerable<EventDto>>> GetEvents()
         {
@@ -33,7 +32,9 @@ namespace Diversion.Controllers
                     StartDateTime = e.StartDateTime,
                     EndDateTime = e.EndDateTime,
                     EventType = e.EventType,
-                    Location = e.Location,
+                    StreetAddress = e.StreetAddress,
+                    City = e.City,
+                    State = e.State,
                     MeetingUrl = e.MeetingUrl,
                     RequiresRsvp = e.RequiresRsvp,
                     CreatedAt = e.CreatedAt
@@ -43,7 +44,6 @@ namespace Diversion.Controllers
             return Ok(events);
         }
 
-        // GET: api/events/{id}
         [HttpGet("{id}")]
         public async Task<ActionResult<EventDetailDto>> GetEvent(Guid id)
         {
@@ -72,7 +72,9 @@ namespace Diversion.Controllers
                     StartDateTime = e.StartDateTime,
                     EndDateTime = e.EndDateTime,
                     EventType = e.EventType,
-                    Location = e.Location,
+                    StreetAddress = e.StreetAddress,
+                    City = e.City,
+                    State = e.State,
                     MeetingUrl = e.MeetingUrl,
                     RequiresRsvp = e.RequiresRsvp,
                     CreatedAt = e.CreatedAt,
@@ -95,7 +97,6 @@ namespace Diversion.Controllers
             return Ok(eventDetail);
         }
 
-        // GET: api/events/interest/{interestTagId}
         [HttpGet("interest/{interestTagId}")]
         public async Task<ActionResult<IEnumerable<EventDto>>> GetEventsByInterest(Guid interestTagId)
         {
@@ -115,7 +116,9 @@ namespace Diversion.Controllers
                     StartDateTime = e.StartDateTime,
                     EndDateTime = e.EndDateTime,
                     EventType = e.EventType,
-                    Location = e.Location,
+                    StreetAddress = e.StreetAddress,
+                    City = e.City,
+                    State = e.State,
                     MeetingUrl = e.MeetingUrl,
                     RequiresRsvp = e.RequiresRsvp,
                     CreatedAt = e.CreatedAt
@@ -125,7 +128,6 @@ namespace Diversion.Controllers
             return Ok(events);
         }
 
-        // GET: api/events/my
         [HttpGet("my")]
         public async Task<ActionResult<IEnumerable<EventDto>>> GetMyEvents()
         {
@@ -149,7 +151,9 @@ namespace Diversion.Controllers
                     StartDateTime = e.StartDateTime,
                     EndDateTime = e.EndDateTime,
                     EventType = e.EventType,
-                    Location = e.Location,
+                    StreetAddress = e.StreetAddress,
+                    City = e.City,
+                    State = e.State,
                     MeetingUrl = e.MeetingUrl,
                     RequiresRsvp = e.RequiresRsvp,
                     CreatedAt = e.CreatedAt
@@ -159,7 +163,6 @@ namespace Diversion.Controllers
             return Ok(events);
         }
 
-        // POST: api/events
         [HttpPost]
         public async Task<ActionResult<EventDto>> CreateEvent([FromBody] CreateEventDto dto)
         {
@@ -167,27 +170,23 @@ namespace Diversion.Controllers
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
-            // Validate interest tag exists
             var interestTagExists = await _context.SubInterests
                 .AnyAsync(si => si.Id == dto.InterestTagId);
 
             if (!interestTagExists)
                 return BadRequest("Interest tag not found");
 
-            // Validate dates
             if (dto.EndDateTime <= dto.StartDateTime)
                 return BadRequest("End date must be after start date");
 
-            // Validate future dates
             if (dto.StartDateTime <= DateTime.UtcNow)
                 return BadRequest("Start date must be in the future");
 
-            // Validate event type specific fields
             if (dto.EventType == "Online" && string.IsNullOrWhiteSpace(dto.MeetingUrl))
                 return BadRequest("Meeting URL is required for online events");
 
-            if (dto.EventType == "InPerson" && string.IsNullOrWhiteSpace(dto.Location))
-                return BadRequest("Location is required for in-person events");
+            if (dto.EventType == "InPerson" && (string.IsNullOrWhiteSpace(dto.City) || string.IsNullOrWhiteSpace(dto.State)))
+                return BadRequest("City and State are required for in-person events");
 
             var newEvent = new Event
             {
@@ -199,7 +198,9 @@ namespace Diversion.Controllers
                 StartDateTime = dto.StartDateTime,
                 EndDateTime = dto.EndDateTime,
                 EventType = dto.EventType,
-                Location = dto.Location,
+                StreetAddress = dto.StreetAddress,
+                City = dto.City,
+                State = dto.State,
                 MeetingUrl = dto.MeetingUrl,
                 RequiresRsvp = dto.RequiresRsvp,
                 CreatedAt = DateTime.UtcNow
@@ -223,7 +224,11 @@ namespace Diversion.Controllers
                     Description = e.Description,
                     StartDateTime = e.StartDateTime,
                     EndDateTime = e.EndDateTime,
-                    Location = e.Location,
+                    EventType = e.EventType,
+                    StreetAddress = e.StreetAddress,
+                    City = e.City,
+                    State = e.State,
+                    MeetingUrl = e.MeetingUrl,
                     RequiresRsvp = e.RequiresRsvp,
                     CreatedAt = e.CreatedAt
                 })
@@ -232,7 +237,6 @@ namespace Diversion.Controllers
             return CreatedAtAction(nameof(GetEvent), new { id = newEvent.Id }, result);
         }
 
-        // PUT: api/events/{id}
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateEvent(Guid id, [FromBody] UpdateEventDto dto)
         {
@@ -269,14 +273,17 @@ namespace Diversion.Controllers
                 eventToUpdate.EndDateTime = dto.EndDateTime.Value;
             if (dto.EventType != null)
                 eventToUpdate.EventType = dto.EventType;
-            if (dto.Location != null)
-                eventToUpdate.Location = dto.Location;
+            if (dto.StreetAddress != null)
+                eventToUpdate.StreetAddress = dto.StreetAddress;
+            if (dto.City != null)
+                eventToUpdate.City = dto.City;
+            if (dto.State != null)
+                eventToUpdate.State = dto.State;
             if (dto.MeetingUrl != null)
                 eventToUpdate.MeetingUrl = dto.MeetingUrl;
             if (dto.RequiresRsvp.HasValue)
                 eventToUpdate.RequiresRsvp = dto.RequiresRsvp.Value;
 
-            // Validate dates
             if (eventToUpdate.EndDateTime <= eventToUpdate.StartDateTime)
                 return BadRequest("End date must be after start date");
 
@@ -285,7 +292,6 @@ namespace Diversion.Controllers
             return NoContent();
         }
 
-        // DELETE: api/events/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEvent(Guid id)
         {

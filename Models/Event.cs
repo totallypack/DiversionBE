@@ -20,9 +20,11 @@ namespace Diversion.Models
         [Required]
         public DateTime EndDateTime { get; set; }
         [Required]
-        public string EventType { get; set; } // "Online" or "InPerson"
-        public string? Location { get; set; } // Physical address for in-person events
-        public string? MeetingUrl { get; set; } // Virtual meeting link for online events
+        public string EventType { get; set; }
+        public string? StreetAddress { get; set; }
+        public string? City { get; set; }
+        public string? State { get; set; }
+        public string? MeetingUrl { get; set; }
         public bool RequiresRsvp { get; set; }
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.Now;
