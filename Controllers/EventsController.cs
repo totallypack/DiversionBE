@@ -32,7 +32,9 @@ namespace Diversion.Controllers
                     Description = e.Description,
                     StartDateTime = e.StartDateTime,
                     EndDateTime = e.EndDateTime,
+                    EventType = e.EventType,
                     Location = e.Location,
+                    MeetingUrl = e.MeetingUrl,
                     RequiresRsvp = e.RequiresRsvp,
                     CreatedAt = e.CreatedAt
                 })
@@ -69,7 +71,9 @@ namespace Diversion.Controllers
                     Description = e.Description,
                     StartDateTime = e.StartDateTime,
                     EndDateTime = e.EndDateTime,
+                    EventType = e.EventType,
                     Location = e.Location,
+                    MeetingUrl = e.MeetingUrl,
                     RequiresRsvp = e.RequiresRsvp,
                     CreatedAt = e.CreatedAt,
                     Attendees = e.Attendees.Select(a => new EventAttendeeDto
@@ -110,7 +114,9 @@ namespace Diversion.Controllers
                     Description = e.Description,
                     StartDateTime = e.StartDateTime,
                     EndDateTime = e.EndDateTime,
+                    EventType = e.EventType,
                     Location = e.Location,
+                    MeetingUrl = e.MeetingUrl,
                     RequiresRsvp = e.RequiresRsvp,
                     CreatedAt = e.CreatedAt
                 })
@@ -142,7 +148,9 @@ namespace Diversion.Controllers
                     Description = e.Description,
                     StartDateTime = e.StartDateTime,
                     EndDateTime = e.EndDateTime,
+                    EventType = e.EventType,
                     Location = e.Location,
+                    MeetingUrl = e.MeetingUrl,
                     RequiresRsvp = e.RequiresRsvp,
                     CreatedAt = e.CreatedAt
                 })
@@ -170,6 +178,17 @@ namespace Diversion.Controllers
             if (dto.EndDateTime <= dto.StartDateTime)
                 return BadRequest("End date must be after start date");
 
+            // Validate future dates
+            if (dto.StartDateTime <= DateTime.UtcNow)
+                return BadRequest("Start date must be in the future");
+
+            // Validate event type specific fields
+            if (dto.EventType == "Online" && string.IsNullOrWhiteSpace(dto.MeetingUrl))
+                return BadRequest("Meeting URL is required for online events");
+
+            if (dto.EventType == "InPerson" && string.IsNullOrWhiteSpace(dto.Location))
+                return BadRequest("Location is required for in-person events");
+
             var newEvent = new Event
             {
                 Id = Guid.NewGuid(),
@@ -179,7 +198,9 @@ namespace Diversion.Controllers
                 Description = dto.Description,
                 StartDateTime = dto.StartDateTime,
                 EndDateTime = dto.EndDateTime,
+                EventType = dto.EventType,
                 Location = dto.Location,
+                MeetingUrl = dto.MeetingUrl,
                 RequiresRsvp = dto.RequiresRsvp,
                 CreatedAt = DateTime.UtcNow
             };
@@ -246,8 +267,12 @@ namespace Diversion.Controllers
                 eventToUpdate.StartDateTime = dto.StartDateTime.Value;
             if (dto.EndDateTime.HasValue)
                 eventToUpdate.EndDateTime = dto.EndDateTime.Value;
+            if (dto.EventType != null)
+                eventToUpdate.EventType = dto.EventType;
             if (dto.Location != null)
                 eventToUpdate.Location = dto.Location;
+            if (dto.MeetingUrl != null)
+                eventToUpdate.MeetingUrl = dto.MeetingUrl;
             if (dto.RequiresRsvp.HasValue)
                 eventToUpdate.RequiresRsvp = dto.RequiresRsvp.Value;
 
