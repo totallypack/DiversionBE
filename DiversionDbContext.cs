@@ -7,13 +7,13 @@ namespace Diversion
     public class DiversionDbContext(DbContextOptions<DiversionDbContext> options) : IdentityDbContext(options)
     {
 
-        // DbSets for your models
         public DbSet<UserProfile> UserProfiles { get; set; }
         public DbSet<Interest> Interests { get; set; }
         public DbSet<SubInterest> SubInterests { get; set; }
         public DbSet<UserInterest> UserInterests { get; set; }
         public DbSet<Event> Events { get; set; }
         public DbSet<EventAttendee> EventAttendees { get; set; }
+        public DbSet<Friendship> Friendships { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -73,6 +73,22 @@ namespace Diversion
 
             modelBuilder.Entity<UserInterest>()
                 .HasIndex(ui => new { ui.UserId, ui.SubInterestId })
+                .IsUnique();
+
+            modelBuilder.Entity<Friendship>()
+                .HasOne(f => f.User)
+                .WithMany()
+                .HasForeignKey(f => f.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Friendship>()
+                .HasOne(f => f.Friend)
+                .WithMany()
+                .HasForeignKey(f => f.FriendId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Friendship>()
+                .HasIndex(f => new { f.UserId, f.FriendId })
                 .IsUnique();
 
             // Seed Data - Interests

@@ -36,17 +36,62 @@ namespace Diversion.Controllers
                     State = up.State,
                     DOB = up.DOB,
                     ProfilePicUrl = up.ProfilePicUrl,
-                    Interests = up.UserInterests.Select(ui => new SubInterestDto
+                    Interests = up.UserInterests.Select(ui => new SubInterestWithInterestDto
                     {
                         Id = ui.SubInterest.Id,
                         Name = ui.SubInterest.Name,
-                        InterestId = ui.SubInterest.Interest.Id,
                         Description = ui.SubInterest.Description,
-                        IconUrl = ui.SubInterest.IconUrl
+                        IconUrl = ui.SubInterest.IconUrl,
+                        Interest = new InterestDto
+                        {
+                            Id = ui.SubInterest.Interest.Id,
+                            Name = ui.SubInterest.Interest.Name,
+                            Description = ui.SubInterest.Interest.Description
+                        }
                     }).ToList()
                 }).FirstOrDefaultAsync();
             if (profile == null)
                 return NotFound();
+            return Ok(profile);
+        }
+
+        [HttpGet("{userId}")]
+        public async Task<ActionResult<UserProfileWithInterestsDto>> GetUserProfile(string userId)
+        {
+            var profile = await _context.UserProfiles
+                .Include(up => up.UserInterests)
+                    .ThenInclude(ui => ui.SubInterest)
+                        .ThenInclude(si => si.Interest)
+                .Include(up => up.User)
+                .Where(up => up.UserId == userId)
+                .Select(up => new UserProfileWithInterestsDto
+                {
+                    Id = up.Id,
+                    UserId = up.UserId,
+                    DisplayName = up.DisplayName,
+                    Bio = up.Bio,
+                    City = up.City,
+                    State = up.State,
+                    DOB = up.DOB,
+                    ProfilePicUrl = up.ProfilePicUrl,
+                    Interests = up.UserInterests.Select(ui => new SubInterestWithInterestDto
+                    {
+                        Id = ui.SubInterest.Id,
+                        Name = ui.SubInterest.Name,
+                        Description = ui.SubInterest.Description,
+                        IconUrl = ui.SubInterest.IconUrl,
+                        Interest = new InterestDto
+                        {
+                            Id = ui.SubInterest.Interest.Id,
+                            Name = ui.SubInterest.Interest.Name,
+                            Description = ui.SubInterest.Interest.Description
+                        }
+                    }).ToList()
+                }).FirstOrDefaultAsync();
+
+            if (profile == null)
+                return NotFound();
+
             return Ok(profile);
         }
 
