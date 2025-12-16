@@ -42,6 +42,6 @@ namespace Diversion.DTOs
         public string? State { get; set; }
         public DateTime? DOB { get; set; }
         public string? ProfilePicUrl { get; set; }
-        public List<SubInterestDto> Interests { get; set; } = [];
+        public List<SubInterestWithInterestDto> Interests { get; set; } = [];
     }
 }

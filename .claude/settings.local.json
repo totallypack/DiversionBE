@@ -7,7 +7,8 @@
       "Bash(nul)",
       "Bash(curl:*)",
       "Bash(npm run dev:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "WebFetch(domain:www.connectionsacademy.com)"
     ],
     "deny": [],
     "ask": []

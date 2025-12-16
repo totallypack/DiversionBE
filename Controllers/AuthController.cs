@@ -59,7 +59,6 @@ namespace Diversion.Controllers
                 });
             }
 
-            // Sign in the user after successful registration
             await signInManager.SignInAsync(user, isPersistent: true);
 
             return Ok(new AuthResponseDto
