@@ -163,6 +163,45 @@ namespace Diversion.Controllers
             return Ok(events);
         }
 
+        [HttpGet("rsvpd")]
+        public async Task<ActionResult<IEnumerable<EventDto>>> GetMyRsvpdEvents()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            var events = await _context.EventAttendees
+                .Include(ea => ea.Event)
+                    .ThenInclude(e => e.InterestTag)
+                .Include(ea => ea.Event)
+                    .ThenInclude(e => e.Organizer)
+                .Where(ea => ea.UserId == userId)
+                .OrderByDescending(ea => ea.Event.StartDateTime)
+                .Select(ea => new EventDto
+                {
+                    Id = ea.Event.Id,
+                    OrganizerId = ea.Event.OrganizerId,
+                    OrganizerUsername = ea.Event.Organizer.UserName,
+                    InterestTagId = ea.Event.InterestTagId,
+                    InterestTagName = ea.Event.InterestTag.Name,
+                    Title = ea.Event.Title,
+                    Description = ea.Event.Description,
+                    StartDateTime = ea.Event.StartDateTime,
+                    EndDateTime = ea.Event.EndDateTime,
+                    EventType = ea.Event.EventType,
+                    StreetAddress = ea.Event.StreetAddress,
+                    City = ea.Event.City,
+                    State = ea.Event.State,
+                    MeetingUrl = ea.Event.MeetingUrl,
+                    RequiresRsvp = ea.Event.RequiresRsvp,
+                    CreatedAt = ea.Event.CreatedAt,
+                    RsvpStatus = ea.Status
+                })
+                .ToListAsync();
+
+            return Ok(events);
+        }
+
         [HttpPost]
         public async Task<ActionResult<EventDto>> CreateEvent([FromBody] CreateEventDto dto)
         {
@@ -207,6 +246,18 @@ namespace Diversion.Controllers
             };
 
             _context.Events.Add(newEvent);
+            await _context.SaveChangesAsync();
+
+            var organizerAttendee = new EventAttendee
+            {
+                Id = Guid.NewGuid(),
+                EventId = newEvent.Id,
+                UserId = userId,
+                Status = "Going",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.EventAttendees.Add(organizerAttendee);
             await _context.SaveChangesAsync();
 
             var result = await _context.Events

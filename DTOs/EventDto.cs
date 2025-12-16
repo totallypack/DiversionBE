@@ -20,6 +20,7 @@ namespace Diversion.DTOs
         public string? MeetingUrl { get; set; }
         public bool RequiresRsvp { get; set; }
         public DateTime CreatedAt { get; set; }
+        public string? RsvpStatus { get; set; }
     }
 
     public class CreateEventDto

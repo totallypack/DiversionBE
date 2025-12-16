@@ -18,14 +18,14 @@ namespace Diversion.DTOs
         public Guid EventId { get; set; }
 
         [Required]
-        [RegularExpression("^(Going|Interested|Not Going)$")]
-        public string Status { get; set; } = "Interested";
+        [RegularExpression("^(Going|Maybe|Not Going)$")]
+        public string Status { get; set; } = "Maybe";
     }
 
     public class UpdateEventAttendeeDto
     {
         [Required]
-        [RegularExpression("^(Going|Interested|Not Going)$")]
+        [RegularExpression("^(Going|Maybe|Not Going)$")]
         public string Status { get; set; }
     }
 }

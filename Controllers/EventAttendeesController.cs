@@ -92,9 +92,12 @@ namespace Diversion.Controllers
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
-            var eventExists = await _context.Events.AnyAsync(e => e.Id == dto.EventId);
-            if (!eventExists)
+            var eventToRsvp = await _context.Events.FindAsync(dto.EventId);
+            if (eventToRsvp == null)
                 return BadRequest("Event not found");
+
+            if (eventToRsvp.OrganizerId == userId)
+                return BadRequest("Event organizers are automatically added as attendees");
 
             var existingAttendee = await _context.EventAttendees
                 .FirstOrDefaultAsync(ea => ea.EventId == dto.EventId && ea.UserId == userId);
@@ -159,10 +162,14 @@ namespace Diversion.Controllers
                 return Unauthorized();
 
             var attendee = await _context.EventAttendees
+                .Include(ea => ea.Event)
                 .FirstOrDefaultAsync(ea => ea.Id == id && ea.UserId == userId);
 
             if (attendee == null)
                 return NotFound();
+
+            if (attendee.Event.OrganizerId == userId)
+                return BadRequest("Event organizers cannot remove their attendance");
 
             _context.EventAttendees.Remove(attendee);
             await _context.SaveChangesAsync();

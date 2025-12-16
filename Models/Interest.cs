@@ -14,7 +14,6 @@ namespace Diversion.Models
 
         public string? IconUrl { get; set; }
 
-        // Navigation properties
         public ICollection<SubInterest> SubInterests { get; set; }
     }
 }
