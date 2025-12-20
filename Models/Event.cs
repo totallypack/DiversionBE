@@ -27,8 +27,8 @@ namespace Diversion.Models
         public string? MeetingUrl { get; set; }
         public bool RequiresRsvp { get; set; }
         [Required]
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
-        public IdentityUser Organizer {  get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public IdentityUser Organizer { get; set; }
         public SubInterest InterestTag { get; set; }
         public ICollection<EventAttendee> Attendees { get; set; }
 

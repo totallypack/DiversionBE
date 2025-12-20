@@ -30,7 +30,6 @@ namespace Diversion.Controllers
         public async Task<ActionResult<InterestWithSubInterestsDto>> GetInterestById(Guid id)
         {
             var interest = await _context.Interests
-                .Include(i => i.SubInterests)
                 .Where(i => i.Id == id)
                 .Select(i => new InterestWithSubInterestsDto
                 {
@@ -39,13 +38,13 @@ namespace Diversion.Controllers
                     Description = i.Description,
                     IconUrl = i.IconUrl,
                     SubInterests = i.SubInterests.Select(si => new SubInterestDto
-                        {
-                            Id = si.Id,
-                            Name = si.Name,
-                            InterestId = si.InterestId,
-                            Description = si.Description,
-                            IconUrl = si.IconUrl
-                        }).ToList()
+                    {
+                        Id = si.Id,
+                        Name = si.Name,
+                        InterestId = si.InterestId,
+                        Description = si.Description,
+                        IconUrl = si.IconUrl
+                    }).ToList()
                 }).FirstOrDefaultAsync();
             if (interest == null)
             {
@@ -59,7 +58,6 @@ namespace Diversion.Controllers
         public async Task<ActionResult<List<InterestWithSubInterestsDto>>> GetAllInterestsWithSubinterests()
         {
             var interests = await _context.Interests
-                .Include(i => i.SubInterests)
                 .Select(i => new InterestWithSubInterestsDto
                 {
                     Id = i.Id,

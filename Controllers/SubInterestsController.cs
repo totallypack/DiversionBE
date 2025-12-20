@@ -11,12 +11,27 @@ namespace Diversion.Controllers
     {
         private readonly DiversionDbContext _context = context;
 
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<SubInterestDto>>> GetSubInterests()
+        {
+            var subInterests = await _context.SubInterests
+                .Select(si => new SubInterestDto
+                {
+                    Id = si.Id,
+                    Name = si.Name,
+                    InterestId = si.InterestId,
+                    Description = si.Description,
+                    IconUrl = si.IconUrl
+                }).ToListAsync();
+
+            return Ok(subInterests);
+        }
+
         [HttpGet("{id}")]
         public async Task<ActionResult<SubInterestWithInterestDto>> GetSubInterest(Guid id)
         {
             var subInterest = await _context.SubInterests
-                .Include(si => si.Interest)
-                .Where(si  => si.Id == id)
+                .Where(si => si.Id == id)
                 .Select(si => new SubInterestWithInterestDto
                 {
                     Id = si.Id,

@@ -22,9 +22,6 @@ namespace Diversion.Controllers
                 return Unauthorized();
 
             var profile = await _context.UserProfiles
-                .Include(up => up.UserInterests)
-                    .ThenInclude(ui => ui.SubInterest)
-                        .ThenInclude(si => si.Interest)
                 .Where(up => up.UserId == userId)
                 .Select(up => new UserProfileWithInterestsDto
                 {
@@ -50,19 +47,35 @@ namespace Diversion.Controllers
                         }
                     }).ToList()
                 }).FirstOrDefaultAsync();
+
             if (profile == null)
-                return NotFound();
+            {
+                var user = await _context.Users.FindAsync(userId);
+                return Ok(new UserProfileWithInterestsDto
+                {
+                    Id = Guid.Empty,
+                    UserId = userId,
+                    DisplayName = user?.UserName ?? "Unknown User",
+                    Bio = null,
+                    City = null,
+                    State = null,
+                    DOB = null,
+                    ProfilePicUrl = null,
+                    Interests = new List<SubInterestWithInterestDto>()
+                });
+            }
+
             return Ok(profile);
         }
 
         [HttpGet("{userId}")]
         public async Task<ActionResult<UserProfileWithInterestsDto>> GetUserProfile(string userId)
         {
+            var userExists = await _context.Users.AnyAsync(u => u.Id == userId);
+            if (!userExists)
+                return NotFound(new { message = "User not found" });
+
             var profile = await _context.UserProfiles
-                .Include(up => up.UserInterests)
-                    .ThenInclude(ui => ui.SubInterest)
-                        .ThenInclude(si => si.Interest)
-                .Include(up => up.User)
                 .Where(up => up.UserId == userId)
                 .Select(up => new UserProfileWithInterestsDto
                 {
@@ -74,23 +87,41 @@ namespace Diversion.Controllers
                     State = up.State,
                     DOB = up.DOB,
                     ProfilePicUrl = up.ProfilePicUrl,
-                    Interests = up.UserInterests.Select(ui => new SubInterestWithInterestDto
-                    {
-                        Id = ui.SubInterest.Id,
-                        Name = ui.SubInterest.Name,
-                        Description = ui.SubInterest.Description,
-                        IconUrl = ui.SubInterest.IconUrl,
-                        Interest = new InterestDto
+                    Interests = _context.UserInterests
+                        .Where(ui => ui.UserId == userId)
+                        .Select(ui => new SubInterestWithInterestDto
                         {
-                            Id = ui.SubInterest.Interest.Id,
-                            Name = ui.SubInterest.Interest.Name,
-                            Description = ui.SubInterest.Interest.Description
-                        }
-                    }).ToList()
-                }).FirstOrDefaultAsync();
+                            Id = ui.SubInterest.Id,
+                            Name = ui.SubInterest.Name,
+                            Description = ui.SubInterest.Description,
+                            IconUrl = ui.SubInterest.IconUrl,
+                            Interest = new InterestDto
+                            {
+                                Id = ui.SubInterest.Interest.Id,
+                                Name = ui.SubInterest.Interest.Name,
+                                Description = ui.SubInterest.Interest.Description
+                            }
+                        })
+                        .ToList()
+                })
+                .FirstOrDefaultAsync();
 
             if (profile == null)
-                return NotFound();
+            {
+                var user = await _context.Users.FindAsync(userId);
+                return Ok(new UserProfileWithInterestsDto
+                {
+                    Id = Guid.Empty,
+                    UserId = userId,
+                    DisplayName = user?.UserName ?? "Unknown User",
+                    Bio = null,
+                    City = null,
+                    State = null,
+                    DOB = null,
+                    ProfilePicUrl = null,
+                    Interests = new List<SubInterestWithInterestDto>()
+                });
+            }
 
             return Ok(profile);
         }

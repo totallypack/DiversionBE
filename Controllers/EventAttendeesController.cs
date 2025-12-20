@@ -18,14 +18,13 @@ namespace Diversion.Controllers
         public async Task<ActionResult<IEnumerable<EventAttendeeDto>>> GetEventAttendees(Guid eventId)
         {
             var attendees = await _context.EventAttendees
-                .Include(ea => ea.User)
                 .Where(ea => ea.EventId == eventId)
                 .Select(ea => new EventAttendeeDto
                 {
                     Id = ea.Id,
                     EventId = ea.EventId,
                     UserId = ea.UserId,
-                    Username = ea.User.UserName,
+                    Username = ea.User.UserName ?? "",
                     Status = ea.Status,
                     CreatedAt = ea.CreatedAt
                 })
@@ -42,14 +41,13 @@ namespace Diversion.Controllers
                 return Unauthorized();
 
             var attendees = await _context.EventAttendees
-                .Include(ea => ea.User)
                 .Where(ea => ea.UserId == userId)
                 .Select(ea => new EventAttendeeDto
                 {
                     Id = ea.Id,
                     EventId = ea.EventId,
                     UserId = ea.UserId,
-                    Username = ea.User.UserName,
+                    Username = ea.User.UserName ?? "",
                     Status = ea.Status,
                     CreatedAt = ea.CreatedAt
                 })
@@ -59,28 +57,24 @@ namespace Diversion.Controllers
         }
 
         [HttpGet("event/{eventId}/me")]
-        public async Task<ActionResult<EventAttendeeDto>> GetMyAttendanceForEvent(Guid eventId)
+        public async Task<ActionResult<EventAttendeeDto?>> GetMyAttendanceForEvent(Guid eventId)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
             var attendee = await _context.EventAttendees
-                .Include(ea => ea.User)
                 .Where(ea => ea.EventId == eventId && ea.UserId == userId)
                 .Select(ea => new EventAttendeeDto
                 {
                     Id = ea.Id,
                     EventId = ea.EventId,
                     UserId = ea.UserId,
-                    Username = ea.User.UserName,
+                    Username = ea.User.UserName ?? "",
                     Status = ea.Status,
                     CreatedAt = ea.CreatedAt
                 })
                 .FirstOrDefaultAsync();
-
-            if (attendee == null)
-                return NotFound();
 
             return Ok(attendee);
         }
@@ -118,14 +112,13 @@ namespace Diversion.Controllers
             await _context.SaveChangesAsync();
 
             var result = await _context.EventAttendees
-                .Include(ea => ea.User)
                 .Where(ea => ea.Id == attendee.Id)
                 .Select(ea => new EventAttendeeDto
                 {
                     Id = ea.Id,
                     EventId = ea.EventId,
                     UserId = ea.UserId,
-                    Username = ea.User.UserName,
+                    Username = ea.User.UserName ?? "",
                     Status = ea.Status,
                     CreatedAt = ea.CreatedAt
                 })

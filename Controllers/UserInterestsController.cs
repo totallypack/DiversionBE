@@ -22,8 +22,6 @@ namespace Diversion.Controllers
                 return Unauthorized();
 
             var interests = await _context.UserInterests
-                .Include(ui => ui.SubInterest)
-                    .ThenInclude(si => si.Interest)
                 .Where(ui => ui.UserId == userId)
                 .Select(ui => new UserInterestWithDetailsDto
                 {

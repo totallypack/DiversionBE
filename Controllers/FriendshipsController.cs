@@ -22,14 +22,13 @@ namespace Diversion.Controllers
                 return Unauthorized();
 
             var friendships = await _context.Friendships
-                .Include(f => f.Friend)
                 .Where(f => f.UserId == userId)
                 .Select(f => new FriendshipDto
                 {
                     Id = f.Id,
                     UserId = f.UserId,
                     FriendId = f.FriendId,
-                    FriendUsername = f.Friend.UserName,
+                    FriendUsername = f.Friend.UserName ?? "",
                     FriendDisplayName = _context.UserProfiles
                         .Where(up => up.UserId == f.FriendId)
                         .Select(up => up.DisplayName)
@@ -58,12 +57,12 @@ namespace Diversion.Controllers
                 .ToListAsync();
 
             var users = await _context.Users
-                .Where(u => u.UserName.Contains(query) && u.Id != userId)
+                .Where(u => u.UserName != null && u.UserName.Contains(query) && u.Id != userId)
                 .Take(20)
                 .Select(u => new UserSearchDto
                 {
                     UserId = u.Id,
-                    Username = u.UserName,
+                    Username = u.UserName ?? "",
                     DisplayName = _context.UserProfiles
                         .Where(up => up.UserId == u.Id)
                         .Select(up => up.DisplayName)
@@ -124,14 +123,13 @@ namespace Diversion.Controllers
             await _context.SaveChangesAsync();
 
             var result = await _context.Friendships
-                .Include(f => f.Friend)
                 .Where(f => f.Id == friendship1.Id)
                 .Select(f => new FriendshipDto
                 {
                     Id = f.Id,
                     UserId = f.UserId,
                     FriendId = f.FriendId,
-                    FriendUsername = f.Friend.UserName,
+                    FriendUsername = f.Friend.UserName ?? "",
                     FriendDisplayName = _context.UserProfiles
                         .Where(up => up.UserId == f.FriendId)
                         .Select(up => up.DisplayName)

@@ -14,51 +14,50 @@ namespace Diversion.Controllers
     {
         private readonly DiversionDbContext _context = context;
 
+        private EventDto MapEventToDto(Event e)
+        {
+            return new EventDto
+            {
+                Id = e.Id,
+                OrganizerId = e.OrganizerId,
+                OrganizerUsername = e.Organizer.UserName ?? "",
+                InterestTagId = e.InterestTagId,
+                InterestTagName = e.InterestTag.Name,
+                Title = e.Title,
+                Description = e.Description,
+                StartDateTime = e.StartDateTime,
+                EndDateTime = e.EndDateTime,
+                EventType = e.EventType,
+                StreetAddress = e.StreetAddress,
+                City = e.City,
+                State = e.State,
+                MeetingUrl = e.MeetingUrl,
+                RequiresRsvp = e.RequiresRsvp,
+                CreatedAt = e.CreatedAt
+            };
+        }
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<EventDto>>> GetEvents()
         {
             var events = await _context.Events
                 .Include(e => e.InterestTag)
                 .Include(e => e.Organizer)
-                .Select(e => new EventDto
-                {
-                    Id = e.Id,
-                    OrganizerId = e.OrganizerId,
-                    OrganizerUsername = e.Organizer.UserName,
-                    InterestTagId = e.InterestTagId,
-                    InterestTagName = e.InterestTag.Name,
-                    Title = e.Title,
-                    Description = e.Description,
-                    StartDateTime = e.StartDateTime,
-                    EndDateTime = e.EndDateTime,
-                    EventType = e.EventType,
-                    StreetAddress = e.StreetAddress,
-                    City = e.City,
-                    State = e.State,
-                    MeetingUrl = e.MeetingUrl,
-                    RequiresRsvp = e.RequiresRsvp,
-                    CreatedAt = e.CreatedAt
-                })
                 .ToListAsync();
 
-            return Ok(events);
+            return Ok(events.Select(MapEventToDto));
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<EventDetailDto>> GetEvent(Guid id)
         {
             var eventDetail = await _context.Events
-                .Include(e => e.InterestTag)
-                    .ThenInclude(it => it.Interest)
-                .Include(e => e.Organizer)
-                .Include(e => e.Attendees)
-                    .ThenInclude(a => a.User)
                 .Where(e => e.Id == id)
                 .Select(e => new EventDetailDto
                 {
                     Id = e.Id,
                     OrganizerId = e.OrganizerId,
-                    OrganizerUsername = e.Organizer.UserName,
+                    OrganizerUsername = e.Organizer.UserName ?? "",
                     InterestTag = new SubInterestDto
                     {
                         Id = e.InterestTag.Id,
@@ -83,7 +82,7 @@ namespace Diversion.Controllers
                         Id = a.Id,
                         EventId = a.EventId,
                         UserId = a.UserId,
-                        Username = a.User.UserName,
+                        Username = a.User.UserName ?? "",
                         Status = a.Status,
                         CreatedAt = a.CreatedAt
                     }).ToList(),
@@ -104,28 +103,9 @@ namespace Diversion.Controllers
                 .Include(e => e.InterestTag)
                 .Include(e => e.Organizer)
                 .Where(e => e.InterestTagId == interestTagId)
-                .Select(e => new EventDto
-                {
-                    Id = e.Id,
-                    OrganizerId = e.OrganizerId,
-                    OrganizerUsername = e.Organizer.UserName,
-                    InterestTagId = e.InterestTagId,
-                    InterestTagName = e.InterestTag.Name,
-                    Title = e.Title,
-                    Description = e.Description,
-                    StartDateTime = e.StartDateTime,
-                    EndDateTime = e.EndDateTime,
-                    EventType = e.EventType,
-                    StreetAddress = e.StreetAddress,
-                    City = e.City,
-                    State = e.State,
-                    MeetingUrl = e.MeetingUrl,
-                    RequiresRsvp = e.RequiresRsvp,
-                    CreatedAt = e.CreatedAt
-                })
                 .ToListAsync();
 
-            return Ok(events);
+            return Ok(events.Select(MapEventToDto));
         }
 
         [HttpGet("my")]
@@ -139,67 +119,9 @@ namespace Diversion.Controllers
                 .Include(e => e.InterestTag)
                 .Include(e => e.Organizer)
                 .Where(e => e.OrganizerId == userId)
-                .Select(e => new EventDto
-                {
-                    Id = e.Id,
-                    OrganizerId = e.OrganizerId,
-                    OrganizerUsername = e.Organizer.UserName,
-                    InterestTagId = e.InterestTagId,
-                    InterestTagName = e.InterestTag.Name,
-                    Title = e.Title,
-                    Description = e.Description,
-                    StartDateTime = e.StartDateTime,
-                    EndDateTime = e.EndDateTime,
-                    EventType = e.EventType,
-                    StreetAddress = e.StreetAddress,
-                    City = e.City,
-                    State = e.State,
-                    MeetingUrl = e.MeetingUrl,
-                    RequiresRsvp = e.RequiresRsvp,
-                    CreatedAt = e.CreatedAt
-                })
                 .ToListAsync();
 
-            return Ok(events);
-        }
-
-        [HttpGet("rsvpd")]
-        public async Task<ActionResult<IEnumerable<EventDto>>> GetMyRsvpdEvents()
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
-
-            var events = await _context.EventAttendees
-                .Include(ea => ea.Event)
-                    .ThenInclude(e => e.InterestTag)
-                .Include(ea => ea.Event)
-                    .ThenInclude(e => e.Organizer)
-                .Where(ea => ea.UserId == userId)
-                .OrderByDescending(ea => ea.Event.StartDateTime)
-                .Select(ea => new EventDto
-                {
-                    Id = ea.Event.Id,
-                    OrganizerId = ea.Event.OrganizerId,
-                    OrganizerUsername = ea.Event.Organizer.UserName,
-                    InterestTagId = ea.Event.InterestTagId,
-                    InterestTagName = ea.Event.InterestTag.Name,
-                    Title = ea.Event.Title,
-                    Description = ea.Event.Description,
-                    StartDateTime = ea.Event.StartDateTime,
-                    EndDateTime = ea.Event.EndDateTime,
-                    EventType = ea.Event.EventType,
-                    StreetAddress = ea.Event.StreetAddress,
-                    City = ea.Event.City,
-                    State = ea.Event.State,
-                    MeetingUrl = ea.Event.MeetingUrl,
-                    RequiresRsvp = ea.Event.RequiresRsvp,
-                    CreatedAt = ea.Event.CreatedAt,
-                    RsvpStatus = ea.Status
-                })
-                .ToListAsync();
-
-            return Ok(events);
+            return Ok(events.Select(MapEventToDto));
         }
 
         [HttpGet("user/{userId}")]
@@ -209,26 +131,33 @@ namespace Diversion.Controllers
                 .Include(e => e.InterestTag)
                 .Include(e => e.Organizer)
                 .Where(e => e.OrganizerId == userId)
-                .Select(e => new EventDto
-                {
-                    Id = e.Id,
-                    OrganizerId = e.OrganizerId,
-                    OrganizerUsername = e.Organizer.UserName,
-                    InterestTagId = e.InterestTagId,
-                    InterestTagName = e.InterestTag.Name,
-                    Title = e.Title,
-                    Description = e.Description,
-                    StartDateTime = e.StartDateTime,
-                    EndDateTime = e.EndDateTime,
-                    EventType = e.EventType,
-                    StreetAddress = e.StreetAddress,
-                    City = e.City,
-                    State = e.State,
-                    MeetingUrl = e.MeetingUrl,
-                    RequiresRsvp = e.RequiresRsvp,
-                    CreatedAt = e.CreatedAt
-                })
                 .ToListAsync();
+
+            return Ok(events.Select(MapEventToDto));
+        }
+
+        [HttpGet("rsvpd")]
+        public async Task<ActionResult<IEnumerable<EventDto>>> GetMyRsvpdEvents()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            var eventAttendees = await _context.EventAttendees
+                .Include(ea => ea.Event)
+                    .ThenInclude(e => e.InterestTag)
+                .Include(ea => ea.Event)
+                    .ThenInclude(e => e.Organizer)
+                .Where(ea => ea.UserId == userId)
+                .OrderByDescending(ea => ea.Event.StartDateTime)
+                .ToListAsync();
+
+            var events = eventAttendees.Select(ea =>
+            {
+                var dto = MapEventToDto(ea.Event);
+                dto.RsvpStatus = ea.Status;
+                return dto;
+            });
 
             return Ok(events);
         }
@@ -291,30 +220,12 @@ namespace Diversion.Controllers
             _context.EventAttendees.Add(organizerAttendee);
             await _context.SaveChangesAsync();
 
-            var result = await _context.Events
+            var createdEvent = await _context.Events
                 .Include(e => e.InterestTag)
                 .Include(e => e.Organizer)
-                .Where(e => e.Id == newEvent.Id)
-                .Select(e => new EventDto
-                {
-                    Id = e.Id,
-                    OrganizerId = e.OrganizerId,
-                    OrganizerUsername = e.Organizer.UserName,
-                    InterestTagId = e.InterestTagId,
-                    InterestTagName = e.InterestTag.Name,
-                    Title = e.Title,
-                    Description = e.Description,
-                    StartDateTime = e.StartDateTime,
-                    EndDateTime = e.EndDateTime,
-                    EventType = e.EventType,
-                    StreetAddress = e.StreetAddress,
-                    City = e.City,
-                    State = e.State,
-                    MeetingUrl = e.MeetingUrl,
-                    RequiresRsvp = e.RequiresRsvp,
-                    CreatedAt = e.CreatedAt
-                })
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(e => e.Id == newEvent.Id);
+
+            var result = MapEventToDto(createdEvent);
 
             return CreatedAtAction(nameof(GetEvent), new { id = newEvent.Id }, result);
         }
