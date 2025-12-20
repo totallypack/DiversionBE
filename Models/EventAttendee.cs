@@ -7,13 +7,13 @@ namespace Diversion.Models
     {
         [Key]
         public Guid Id { get; set; }
-        [Required] 
+        [Required]
         public Guid EventId { get; set; }
         [Required]
         public string UserId { get; set; }
         [Required]
         public string Status { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public Event Event { get; set; }
         public IdentityUser User { get; set; }
     }

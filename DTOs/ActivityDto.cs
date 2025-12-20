@@ -6,6 +6,7 @@ namespace Diversion.DTOs
         public string? UserId { get; set; }
         public string? Username { get; set; }
         public string? DisplayName { get; set; }
+        public string? ProfilePicUrl { get; set; }
         public DateTime Timestamp { get; set; }
 
         public Guid? EventId { get; set; }

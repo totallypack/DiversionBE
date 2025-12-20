@@ -12,7 +12,7 @@ namespace Diversion.Models
         public string UserId { get; set; }
         [Required]
         public Guid SubInterestId { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public IdentityUser User { get; set; }
         public SubInterest SubInterest { get; set; }
     }
