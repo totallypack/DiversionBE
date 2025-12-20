@@ -202,6 +202,37 @@ namespace Diversion.Controllers
             return Ok(events);
         }
 
+        [HttpGet("user/{userId}")]
+        public async Task<ActionResult<IEnumerable<EventDto>>> GetUserEvents(string userId)
+        {
+            var events = await _context.Events
+                .Include(e => e.InterestTag)
+                .Include(e => e.Organizer)
+                .Where(e => e.OrganizerId == userId)
+                .Select(e => new EventDto
+                {
+                    Id = e.Id,
+                    OrganizerId = e.OrganizerId,
+                    OrganizerUsername = e.Organizer.UserName,
+                    InterestTagId = e.InterestTagId,
+                    InterestTagName = e.InterestTag.Name,
+                    Title = e.Title,
+                    Description = e.Description,
+                    StartDateTime = e.StartDateTime,
+                    EndDateTime = e.EndDateTime,
+                    EventType = e.EventType,
+                    StreetAddress = e.StreetAddress,
+                    City = e.City,
+                    State = e.State,
+                    MeetingUrl = e.MeetingUrl,
+                    RequiresRsvp = e.RequiresRsvp,
+                    CreatedAt = e.CreatedAt
+                })
+                .ToListAsync();
+
+            return Ok(events);
+        }
+
         [HttpPost]
         public async Task<ActionResult<EventDto>> CreateEvent([FromBody] CreateEventDto dto)
         {
