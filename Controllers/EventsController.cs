@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using Diversion.Constants;
 using Diversion.DTOs;
 using Diversion.Models;
 
@@ -86,7 +87,7 @@ namespace Diversion.Controllers
                         Status = a.Status,
                         CreatedAt = a.CreatedAt
                     }).ToList(),
-                    AttendeeCount = e.Attendees.Count(a => a.Status == "Going")
+                    AttendeeCount = e.Attendees.Count(a => a.Status == AttendeeStatusConstants.Going)
                 })
                 .FirstOrDefaultAsync();
 
@@ -181,53 +182,64 @@ namespace Diversion.Controllers
             if (dto.StartDateTime <= DateTime.UtcNow)
                 return BadRequest("Start date must be in the future");
 
-            if (dto.EventType == "Online" && string.IsNullOrWhiteSpace(dto.MeetingUrl))
+            if (dto.EventType == EventTypeConstants.Online && string.IsNullOrWhiteSpace(dto.MeetingUrl))
                 return BadRequest("Meeting URL is required for online events");
 
-            if (dto.EventType == "InPerson" && (string.IsNullOrWhiteSpace(dto.City) || string.IsNullOrWhiteSpace(dto.State)))
+            if (dto.EventType == EventTypeConstants.InPerson && (string.IsNullOrWhiteSpace(dto.City) || string.IsNullOrWhiteSpace(dto.State)))
                 return BadRequest("City and State are required for in-person events");
 
-            var newEvent = new Event
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
             {
-                Id = Guid.NewGuid(),
-                OrganizerId = userId,
-                InterestTagId = dto.InterestTagId,
-                Title = dto.Title,
-                Description = dto.Description,
-                StartDateTime = dto.StartDateTime,
-                EndDateTime = dto.EndDateTime,
-                EventType = dto.EventType,
-                StreetAddress = dto.StreetAddress,
-                City = dto.City,
-                State = dto.State,
-                MeetingUrl = dto.MeetingUrl,
-                RequiresRsvp = dto.RequiresRsvp,
-                CreatedAt = DateTime.UtcNow
-            };
+                var newEvent = new Event
+                {
+                    Id = Guid.NewGuid(),
+                    OrganizerId = userId,
+                    InterestTagId = dto.InterestTagId,
+                    Title = dto.Title,
+                    Description = dto.Description,
+                    StartDateTime = dto.StartDateTime,
+                    EndDateTime = dto.EndDateTime,
+                    EventType = dto.EventType,
+                    StreetAddress = dto.StreetAddress,
+                    City = dto.City,
+                    State = dto.State,
+                    MeetingUrl = dto.MeetingUrl,
+                    RequiresRsvp = dto.RequiresRsvp,
+                    CreatedAt = DateTime.UtcNow
+                };
 
-            _context.Events.Add(newEvent);
-            await _context.SaveChangesAsync();
+                _context.Events.Add(newEvent);
 
-            var organizerAttendee = new EventAttendee
+                var organizerAttendee = new EventAttendee
+                {
+                    Id = Guid.NewGuid(),
+                    EventId = newEvent.Id,
+                    UserId = userId,
+                    Status = AttendeeStatusConstants.Going,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.EventAttendees.Add(organizerAttendee);
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                var createdEvent = await _context.Events
+                    .Include(e => e.InterestTag)
+                    .Include(e => e.Organizer)
+                    .FirstOrDefaultAsync(e => e.Id == newEvent.Id);
+
+                var result = MapEventToDto(createdEvent);
+
+                return CreatedAtAction(nameof(GetEvent), new { id = newEvent.Id }, result);
+            }
+            catch
             {
-                Id = Guid.NewGuid(),
-                EventId = newEvent.Id,
-                UserId = userId,
-                Status = "Going",
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _context.EventAttendees.Add(organizerAttendee);
-            await _context.SaveChangesAsync();
-
-            var createdEvent = await _context.Events
-                .Include(e => e.InterestTag)
-                .Include(e => e.Organizer)
-                .FirstOrDefaultAsync(e => e.Id == newEvent.Id);
-
-            var result = MapEventToDto(createdEvent);
-
-            return CreatedAtAction(nameof(GetEvent), new { id = newEvent.Id }, result);
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         [HttpPut("{id}")]

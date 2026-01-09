@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "Bash(cat:*)",
+      "Bash(dotnet ef migrations:*)",
+      "Bash(dotnet ef database update:*)",
+      "Bash(npm run build:*)",
+      "Bash(del EventCard.jsx EventDetail.jsx CreateEvent.jsx EditEvent.jsx)"
+    ]
+  }
+}
