@@ -102,43 +102,55 @@ namespace Diversion.Controllers
             if (existingFriendship != null)
                 return BadRequest("Already friends with this user");
 
-            var friendship1 = new Friendship
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
             {
-                Id = Guid.NewGuid(),
-                UserId = userId,
-                FriendId = dto.FriendId,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            var friendship2 = new Friendship
-            {
-                Id = Guid.NewGuid(),
-                UserId = dto.FriendId,
-                FriendId = userId,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _context.Friendships.Add(friendship1);
-            _context.Friendships.Add(friendship2);
-            await _context.SaveChangesAsync();
-
-            var result = await _context.Friendships
-                .Where(f => f.Id == friendship1.Id)
-                .Select(f => new FriendshipDto
+                var friendship1 = new Friendship
                 {
-                    Id = f.Id,
-                    UserId = f.UserId,
-                    FriendId = f.FriendId,
-                    FriendUsername = f.Friend.UserName ?? "",
-                    FriendDisplayName = _context.UserProfiles
-                        .Where(up => up.UserId == f.FriendId)
-                        .Select(up => up.DisplayName)
-                        .FirstOrDefault(),
-                    CreatedAt = f.CreatedAt
-                })
-                .FirstOrDefaultAsync();
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    FriendId = dto.FriendId,
+                    CreatedAt = DateTime.UtcNow
+                };
 
-            return CreatedAtAction(nameof(GetMyFriends), result);
+                var friendship2 = new Friendship
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = dto.FriendId,
+                    FriendId = userId,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.Friendships.Add(friendship1);
+                _context.Friendships.Add(friendship2);
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                var result = await _context.Friendships
+                    .Where(f => f.Id == friendship1.Id)
+                    .Select(f => new FriendshipDto
+                    {
+                        Id = f.Id,
+                        UserId = f.UserId,
+                        FriendId = f.FriendId,
+                        FriendUsername = f.Friend.UserName ?? "",
+                        FriendDisplayName = _context.UserProfiles
+                            .Where(up => up.UserId == f.FriendId)
+                            .Select(up => up.DisplayName)
+                            .FirstOrDefault(),
+                        CreatedAt = f.CreatedAt
+                    })
+                    .FirstOrDefaultAsync();
+
+                return CreatedAtAction(nameof(GetMyFriends), result);
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         [HttpDelete("{friendId}")]
