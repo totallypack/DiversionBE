@@ -33,6 +33,13 @@ namespace Diversion.Controllers
                     State = up.State,
                     DOB = up.DOB,
                     ProfilePicUrl = up.ProfilePicUrl,
+                    UserType = up.UserType.ToString(),
+                    BusinessName = up.BusinessName,
+                    BusinessWebsite = up.BusinessWebsite,
+                    BusinessHours = up.BusinessHours,
+                    BusinessCategory = up.BusinessCategory,
+                    IsVerified = up.IsVerified,
+                    VerifiedAt = up.VerifiedAt,
                     Interests = up.UserInterests.Select(ui => new SubInterestWithInterestDto
                     {
                         Id = ui.SubInterest.Id,
@@ -87,6 +94,13 @@ namespace Diversion.Controllers
                     State = up.State,
                     DOB = up.DOB,
                     ProfilePicUrl = up.ProfilePicUrl,
+                    UserType = up.UserType.ToString(),
+                    BusinessName = up.BusinessName,
+                    BusinessWebsite = up.BusinessWebsite,
+                    BusinessHours = up.BusinessHours,
+                    BusinessCategory = up.BusinessCategory,
+                    IsVerified = up.IsVerified,
+                    VerifiedAt = up.VerifiedAt,
                     Interests = _context.UserInterests
                         .Where(ui => ui.UserId == userId)
                         .Select(ui => new SubInterestWithInterestDto
@@ -139,6 +153,13 @@ namespace Diversion.Controllers
             if (existingProfile != null)
                 return BadRequest("User profile already exists");
 
+            // Parse UserType from string, default to Regular if invalid
+            UserType userType = UserType.Regular;
+            if (!string.IsNullOrEmpty(dto.UserType) && Enum.TryParse<UserType>(dto.UserType, out var parsedType))
+            {
+                userType = parsedType;
+            }
+
             var profile = new UserProfile
             {
                 Id = Guid.NewGuid(),
@@ -148,7 +169,12 @@ namespace Diversion.Controllers
                 City = dto.City,
                 State = dto.State,
                 DOB = dto.DOB,
-                ProfilePicUrl = dto.ProfilePicUrl
+                ProfilePicUrl = dto.ProfilePicUrl,
+                UserType = userType,
+                BusinessName = dto.BusinessName,
+                BusinessWebsite = dto.BusinessWebsite,
+                BusinessHours = dto.BusinessHours,
+                BusinessCategory = dto.BusinessCategory
             };
 
             _context.UserProfiles.Add(profile);
@@ -163,7 +189,14 @@ namespace Diversion.Controllers
                 City = profile.City,
                 State = profile.State,
                 DOB = profile.DOB,
-                ProfilePicUrl = profile.ProfilePicUrl
+                ProfilePicUrl = profile.ProfilePicUrl,
+                UserType = profile.UserType.ToString(),
+                BusinessName = profile.BusinessName,
+                BusinessWebsite = profile.BusinessWebsite,
+                BusinessHours = profile.BusinessHours,
+                BusinessCategory = profile.BusinessCategory,
+                IsVerified = profile.IsVerified,
+                VerifiedAt = profile.VerifiedAt
             };
 
             return Ok(result);
@@ -194,6 +227,16 @@ namespace Diversion.Controllers
                 profile.DOB = dto.DOB;
             if (dto.ProfilePicUrl != null)
                 profile.ProfilePicUrl = dto.ProfilePicUrl;
+            if (dto.UserType != null && Enum.TryParse<UserType>(dto.UserType, out var parsedType))
+                profile.UserType = parsedType;
+            if (dto.BusinessName != null)
+                profile.BusinessName = dto.BusinessName;
+            if (dto.BusinessWebsite != null)
+                profile.BusinessWebsite = dto.BusinessWebsite;
+            if (dto.BusinessHours != null)
+                profile.BusinessHours = dto.BusinessHours;
+            if (dto.BusinessCategory != null)
+                profile.BusinessCategory = dto.BusinessCategory;
 
             await _context.SaveChangesAsync();
 

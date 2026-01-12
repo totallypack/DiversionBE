@@ -26,6 +26,13 @@ namespace Diversion.Models
         public string? State { get; set; }
         public string? MeetingUrl { get; set; }
         public bool RequiresRsvp { get; set; }
+
+        // Paid event fields
+        public decimal? TicketPrice { get; set; }
+        public int? MaxAttendees { get; set; }
+        public int? MinAge { get; set; }
+        public int? MaxAge { get; set; }
+
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public IdentityUser Organizer { get; set; }

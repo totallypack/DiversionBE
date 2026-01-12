@@ -55,6 +55,10 @@ namespace Diversion
                 .HasForeignKey(e => e.InterestTagId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Event>()
+                .Property(e => e.TicketPrice)
+                .HasPrecision(18, 2);
+
             modelBuilder.Entity<EventAttendee>()
                 .HasOne(ea => ea.Event)
                 .WithMany(e => e.Attendees)
