@@ -14,6 +14,7 @@ namespace Diversion
         public DbSet<Event> Events { get; set; }
         public DbSet<EventAttendee> EventAttendees { get; set; }
         public DbSet<Friendship> Friendships { get; set; }
+        public DbSet<FriendRequest> FriendRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -94,6 +95,27 @@ namespace Diversion
             modelBuilder.Entity<Friendship>()
                 .HasIndex(f => new { f.UserId, f.FriendId })
                 .IsUnique();
+
+            modelBuilder.Entity<FriendRequest>()
+                .HasOne(fr => fr.Sender)
+                .WithMany()
+                .HasForeignKey(fr => fr.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<FriendRequest>()
+                .HasOne(fr => fr.Receiver)
+                .WithMany()
+                .HasForeignKey(fr => fr.ReceiverId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<FriendRequest>()
+                .HasIndex(fr => fr.SenderId);
+
+            modelBuilder.Entity<FriendRequest>()
+                .HasIndex(fr => fr.ReceiverId);
+
+            modelBuilder.Entity<FriendRequest>()
+                .HasIndex(fr => new { fr.SenderId, fr.ReceiverId, fr.Status });
 
             // Seed Data - Interests
             var outdoorsId = Guid.Parse("11111111-1111-1111-1111-111111111111");
