@@ -34,6 +34,10 @@ namespace Diversion.Controllers
                 State = e.State,
                 MeetingUrl = e.MeetingUrl,
                 RequiresRsvp = e.RequiresRsvp,
+                TicketPrice = e.TicketPrice,
+                MaxAttendees = e.MaxAttendees,
+                MinAge = e.MinAge,
+                MaxAge = e.MaxAge,
                 CreatedAt = e.CreatedAt
             };
         }
@@ -77,6 +81,10 @@ namespace Diversion.Controllers
                     State = e.State,
                     MeetingUrl = e.MeetingUrl,
                     RequiresRsvp = e.RequiresRsvp,
+                    TicketPrice = e.TicketPrice,
+                    MaxAttendees = e.MaxAttendees,
+                    MinAge = e.MinAge,
+                    MaxAge = e.MaxAge,
                     CreatedAt = e.CreatedAt,
                     Attendees = e.Attendees.Select(a => new EventAttendeeDto
                     {
@@ -207,6 +215,10 @@ namespace Diversion.Controllers
                     State = dto.State,
                     MeetingUrl = dto.MeetingUrl,
                     RequiresRsvp = dto.RequiresRsvp,
+                    TicketPrice = dto.TicketPrice,
+                    MaxAttendees = dto.MaxAttendees,
+                    MinAge = dto.MinAge,
+                    MaxAge = dto.MaxAge,
                     CreatedAt = DateTime.UtcNow
                 };
 
@@ -288,6 +300,14 @@ namespace Diversion.Controllers
                 eventToUpdate.MeetingUrl = dto.MeetingUrl;
             if (dto.RequiresRsvp.HasValue)
                 eventToUpdate.RequiresRsvp = dto.RequiresRsvp.Value;
+            if (dto.TicketPrice.HasValue)
+                eventToUpdate.TicketPrice = dto.TicketPrice.Value;
+            if (dto.MaxAttendees.HasValue)
+                eventToUpdate.MaxAttendees = dto.MaxAttendees.Value;
+            if (dto.MinAge.HasValue)
+                eventToUpdate.MinAge = dto.MinAge.Value;
+            if (dto.MaxAge.HasValue)
+                eventToUpdate.MaxAge = dto.MaxAge.Value;
 
             if (eventToUpdate.EndDateTime <= eventToUpdate.StartDateTime)
                 return BadRequest("End date must be after start date");

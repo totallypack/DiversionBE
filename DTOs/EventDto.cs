@@ -19,6 +19,10 @@ namespace Diversion.DTOs
         public string? State { get; set; }
         public string? MeetingUrl { get; set; }
         public bool RequiresRsvp { get; set; }
+        public decimal? TicketPrice { get; set; }
+        public int? MaxAttendees { get; set; }
+        public int? MinAge { get; set; }
+        public int? MaxAge { get; set; }
         public DateTime CreatedAt { get; set; }
         public string? RsvpStatus { get; set; }
     }
@@ -58,6 +62,11 @@ namespace Diversion.DTOs
         public string? MeetingUrl { get; set; }
 
         public bool RequiresRsvp { get; set; } = false;
+
+        public decimal? TicketPrice { get; set; }
+        public int? MaxAttendees { get; set; }
+        public int? MinAge { get; set; }
+        public int? MaxAge { get; set; }
     }
 
     public class UpdateEventDto
@@ -90,6 +99,11 @@ namespace Diversion.DTOs
         public string? MeetingUrl { get; set; }
 
         public bool? RequiresRsvp { get; set; }
+
+        public decimal? TicketPrice { get; set; }
+        public int? MaxAttendees { get; set; }
+        public int? MinAge { get; set; }
+        public int? MaxAge { get; set; }
     }
 
     public class EventDetailDto
@@ -108,6 +122,10 @@ namespace Diversion.DTOs
         public string? State { get; set; }
         public string? MeetingUrl { get; set; }
         public bool RequiresRsvp { get; set; }
+        public decimal? TicketPrice { get; set; }
+        public int? MaxAttendees { get; set; }
+        public int? MinAge { get; set; }
+        public int? MaxAge { get; set; }
         public DateTime CreatedAt { get; set; }
         public List<EventAttendeeDto> Attendees { get; set; } = new();
         public int AttendeeCount { get; set; }

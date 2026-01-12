@@ -4,6 +4,7 @@ using Diversion;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Diversion.Migrations
 {
     [DbContext(typeof(DiversionDbContext))]
-    partial class DiversionDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260112014333_AddUserTypeAndBusinessFields")]
+    partial class AddUserTypeAndBusinessFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -47,17 +50,8 @@ namespace Diversion.Migrations
                     b.Property<Guid>("InterestTagId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int?>("MaxAge")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("MaxAttendees")
-                        .HasColumnType("int");
-
                     b.Property<string>("MeetingUrl")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("MinAge")
-                        .HasColumnType("int");
 
                     b.Property<string>("OrganizerId")
                         .IsRequired()
@@ -74,9 +68,6 @@ namespace Diversion.Migrations
 
                     b.Property<string>("StreetAddress")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal?>("TicketPrice")
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Title")
                         .IsRequired()
