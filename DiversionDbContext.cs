@@ -15,6 +15,10 @@ namespace Diversion
         public DbSet<EventAttendee> EventAttendees { get; set; }
         public DbSet<Friendship> Friendships { get; set; }
         public DbSet<FriendRequest> FriendRequests { get; set; }
+        public DbSet<Community> Communities { get; set; }
+        public DbSet<CommunityMembership> CommunityMemberships { get; set; }
+        public DbSet<CommunityMessage> CommunityMessages { get; set; }
+        public DbSet<DirectMessage> DirectMessages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -116,6 +120,73 @@ namespace Diversion
 
             modelBuilder.Entity<FriendRequest>()
                 .HasIndex(fr => new { fr.SenderId, fr.ReceiverId, fr.Status });
+
+            modelBuilder.Entity<Community>()
+                .HasOne(c => c.Creator)
+                .WithMany()
+                .HasForeignKey(c => c.CreatorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Community>()
+                .HasOne(c => c.Interest)
+                .WithMany()
+                .HasForeignKey(c => c.InterestId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<CommunityMembership>()
+                .HasOne(cm => cm.Community)
+                .WithMany(c => c.Members)
+                .HasForeignKey(cm => cm.CommunityId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CommunityMembership>()
+                .HasOne(cm => cm.User)
+                .WithMany()
+                .HasForeignKey(cm => cm.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CommunityMembership>()
+                .HasIndex(cm => new { cm.CommunityId, cm.UserId })
+                .IsUnique();
+
+            modelBuilder.Entity<CommunityMessage>()
+                .HasOne(cm => cm.Community)
+                .WithMany(c => c.Messages)
+                .HasForeignKey(cm => cm.CommunityId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CommunityMessage>()
+                .HasOne(cm => cm.Sender)
+                .WithMany()
+                .HasForeignKey(cm => cm.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<CommunityMessage>()
+                .HasOne(cm => cm.ReplyToMessage)
+                .WithMany()
+                .HasForeignKey(cm => cm.ReplyToMessageId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<CommunityMessage>()
+                .HasIndex(cm => new { cm.CommunityId, cm.SentAt });
+
+            modelBuilder.Entity<DirectMessage>()
+                .HasOne(dm => dm.Sender)
+                .WithMany()
+                .HasForeignKey(dm => dm.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DirectMessage>()
+                .HasOne(dm => dm.Receiver)
+                .WithMany()
+                .HasForeignKey(dm => dm.ReceiverId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DirectMessage>()
+                .HasIndex(dm => new { dm.ReceiverId, dm.IsRead });
+
+            modelBuilder.Entity<DirectMessage>()
+                .HasIndex(dm => dm.SentAt);
 
             // Seed Data - Interests
             var outdoorsId = Guid.Parse("11111111-1111-1111-1111-111111111111");
