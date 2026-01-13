@@ -17,6 +17,15 @@ namespace Diversion.DTOs
         public string? BusinessCategory { get; set; }
         public bool IsVerified { get; set; }
         public DateTime? VerifiedAt { get; set; }
+        public string? CaregiverCredentials { get; set; }
+        public int? YearsOfExperience { get; set; }
+        public string? Certifications { get; set; }
+        public string? CareTypes { get; set; }
+        public string? Specializations { get; set; }
+        public bool IsBackgroundChecked { get; set; }
+        public string? LicenseNumber { get; set; }
+        public DateTime? LicenseExpiry { get; set; }
+        public string? EmploymentStatus { get; set; }
     }
 
     public class CreateUserProfileDto
@@ -32,6 +41,14 @@ namespace Diversion.DTOs
         public string? BusinessWebsite { get; set; }
         public string? BusinessHours { get; set; }
         public string? BusinessCategory { get; set; }
+        public string? CaregiverCredentials { get; set; }
+        public int? YearsOfExperience { get; set; }
+        public string? Certifications { get; set; }
+        public string? CareTypes { get; set; }
+        public string? Specializations { get; set; }
+        public string? LicenseNumber { get; set; }
+        public DateTime? LicenseExpiry { get; set; }
+        public string? EmploymentStatus { get; set; }
     }
 
     public class UpdateUserProfileDto
@@ -47,6 +64,14 @@ namespace Diversion.DTOs
         public string? BusinessWebsite { get; set; }
         public string? BusinessHours { get; set; }
         public string? BusinessCategory { get; set; }
+        public string? CaregiverCredentials { get; set; }
+        public int? YearsOfExperience { get; set; }
+        public string? Certifications { get; set; }
+        public string? CareTypes { get; set; }
+        public string? Specializations { get; set; }
+        public string? LicenseNumber { get; set; }
+        public DateTime? LicenseExpiry { get; set; }
+        public string? EmploymentStatus { get; set; }
     }
 
     public class UserProfileWithInterestsDto
@@ -66,6 +91,15 @@ namespace Diversion.DTOs
         public string? BusinessCategory { get; set; }
         public bool IsVerified { get; set; }
         public DateTime? VerifiedAt { get; set; }
+        public string? CaregiverCredentials { get; set; }
+        public int? YearsOfExperience { get; set; }
+        public string? Certifications { get; set; }
+        public string? CareTypes { get; set; }
+        public string? Specializations { get; set; }
+        public bool IsBackgroundChecked { get; set; }
+        public string? LicenseNumber { get; set; }
+        public DateTime? LicenseExpiry { get; set; }
+        public string? EmploymentStatus { get; set; }
         public List<SubInterestWithInterestDto> Interests { get; set; } = [];
     }
 }
