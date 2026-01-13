@@ -19,6 +19,8 @@ namespace Diversion
         public DbSet<CommunityMembership> CommunityMemberships { get; set; }
         public DbSet<CommunityMessage> CommunityMessages { get; set; }
         public DbSet<DirectMessage> DirectMessages { get; set; }
+        public DbSet<CareRelationship> CareRelationships { get; set; }
+        public DbSet<CaregiverRequest> CaregiverRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -187,6 +189,55 @@ namespace Diversion
 
             modelBuilder.Entity<DirectMessage>()
                 .HasIndex(dm => dm.SentAt);
+
+            // CareRelationship configuration
+            modelBuilder.Entity<CareRelationship>()
+                .HasOne(cr => cr.Caregiver)
+                .WithMany()
+                .HasForeignKey(cr => cr.CaregiverId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<CareRelationship>()
+                .HasOne(cr => cr.Recipient)
+                .WithMany()
+                .HasForeignKey(cr => cr.RecipientId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Prevent duplicate caregiver relationships
+            modelBuilder.Entity<CareRelationship>()
+                .HasIndex(cr => new { cr.CaregiverId, cr.RecipientId })
+                .IsUnique();
+
+            // Index for quick lookup of recipient's caregivers
+            modelBuilder.Entity<CareRelationship>()
+                .HasIndex(cr => cr.RecipientId);
+
+            // Index for active relationships
+            modelBuilder.Entity<CareRelationship>()
+                .HasIndex(cr => new { cr.RecipientId, cr.IsActive });
+
+            // CaregiverRequest configuration
+            modelBuilder.Entity<CaregiverRequest>()
+                .HasOne(cgr => cgr.Sender)
+                .WithMany()
+                .HasForeignKey(cgr => cgr.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<CaregiverRequest>()
+                .HasOne(cgr => cgr.Recipient)
+                .WithMany()
+                .HasForeignKey(cgr => cgr.RecipientId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Indexes for CaregiverRequest
+            modelBuilder.Entity<CaregiverRequest>()
+                .HasIndex(cgr => cgr.SenderId);
+
+            modelBuilder.Entity<CaregiverRequest>()
+                .HasIndex(cgr => cgr.RecipientId);
+
+            modelBuilder.Entity<CaregiverRequest>()
+                .HasIndex(cgr => new { cgr.SenderId, cgr.RecipientId, cgr.Status });
 
             // Seed Data - Interests
             var outdoorsId = Guid.Parse("11111111-1111-1111-1111-111111111111");

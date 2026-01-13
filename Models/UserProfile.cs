@@ -28,6 +28,31 @@ namespace Diversion.Models
         public bool IsVerified { get; set; } = false;
         public DateTime? VerifiedAt { get; set; }
 
+        // Caregiver-specific fields (only populated if UserType == Caregiver)
+        [MaxLength(1000)]
+        public string? CaregiverCredentials { get; set; }  // e.g., "CNA, Home Health Aide"
+
+        public int? YearsOfExperience { get; set; }
+
+        [MaxLength(500)]
+        public string? Certifications { get; set; }  // Comma-separated: "CPR, First Aid, Dementia Care"
+
+        [MaxLength(500)]
+        public string? CareTypes { get; set; }  // Comma-separated: "Elderly, Disability, Post-Surgery"
+
+        [MaxLength(500)]
+        public string? Specializations { get; set; }  // "Alzheimer's, Mobility Assistance, Medication Management"
+
+        public bool IsBackgroundChecked { get; set; } = false;
+
+        [MaxLength(100)]
+        public string? LicenseNumber { get; set; }
+
+        public DateTime? LicenseExpiry { get; set; }
+
+        [MaxLength(200)]
+        public string? EmploymentStatus { get; set; }  // "Self-Employed", "Agency: [Name]", "Family Caregiver"
+
         public IdentityUser? User { get; set; }
         public ICollection<UserInterest> UserInterests { get; set; }
     }
