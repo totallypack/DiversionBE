@@ -5,6 +5,7 @@ using System.Security.Claims;
 using Diversion.Constants;
 using Diversion.DTOs;
 using Diversion.Models;
+using Diversion.Helpers;
 
 namespace Diversion.Controllers
 {
@@ -32,6 +33,7 @@ namespace Diversion.Controllers
                 StreetAddress = e.StreetAddress,
                 City = e.City,
                 State = e.State,
+                ZipCode = e.ZipCode,
                 MeetingUrl = e.MeetingUrl,
                 RequiresRsvp = e.RequiresRsvp,
                 TicketPrice = e.TicketPrice,
@@ -79,6 +81,7 @@ namespace Diversion.Controllers
                     StreetAddress = e.StreetAddress,
                     City = e.City,
                     State = e.State,
+                    ZipCode = e.ZipCode,
                     MeetingUrl = e.MeetingUrl,
                     RequiresRsvp = e.RequiresRsvp,
                     TicketPrice = e.TicketPrice,
@@ -178,6 +181,16 @@ namespace Diversion.Controllers
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
+            // Validate caregiver action if acting on behalf
+            var authResult = await CaregiverAuthHelper.ValidateAndAuthorize(
+                _context, userId, dto.ActingOnBehalfOf, CaregiverPermission.ManageEvents);
+
+            if (!authResult.IsAuthorized)
+                return BadRequest(authResult.ErrorMessage);
+
+            // Use effective user ID (recipient if caregiver, otherwise self)
+            var effectiveUserId = authResult.EffectiveUserId;
+
             var interestTagExists = await _context.SubInterests
                 .AnyAsync(si => si.Id == dto.InterestTagId);
 
@@ -203,7 +216,7 @@ namespace Diversion.Controllers
                 var newEvent = new Event
                 {
                     Id = Guid.NewGuid(),
-                    OrganizerId = userId,
+                    OrganizerId = effectiveUserId,
                     InterestTagId = dto.InterestTagId,
                     Title = dto.Title,
                     Description = dto.Description,
@@ -213,6 +226,7 @@ namespace Diversion.Controllers
                     StreetAddress = dto.StreetAddress,
                     City = dto.City,
                     State = dto.State,
+                    ZipCode = dto.ZipCode,
                     MeetingUrl = dto.MeetingUrl,
                     RequiresRsvp = dto.RequiresRsvp,
                     TicketPrice = dto.TicketPrice,
@@ -228,7 +242,7 @@ namespace Diversion.Controllers
                 {
                     Id = Guid.NewGuid(),
                     EventId = newEvent.Id,
-                    UserId = userId,
+                    UserId = effectiveUserId,
                     Status = AttendeeStatusConstants.Going,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -296,6 +310,8 @@ namespace Diversion.Controllers
                 eventToUpdate.City = dto.City;
             if (dto.State != null)
                 eventToUpdate.State = dto.State;
+            if (dto.ZipCode != null)
+                eventToUpdate.ZipCode = dto.ZipCode;
             if (dto.MeetingUrl != null)
                 eventToUpdate.MeetingUrl = dto.MeetingUrl;
             if (dto.RequiresRsvp.HasValue)
@@ -336,6 +352,36 @@ namespace Diversion.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        [HttpGet("nearby")]
+        public async Task<ActionResult<IEnumerable<EventDto>>> GetNearbyEvents(
+            [FromQuery] string zipCode)
+        {
+            if (string.IsNullOrWhiteSpace(zipCode))
+                return BadRequest("Zip code is required");
+
+            // Validate zip code format (5 digits)
+            if (zipCode.Length < 3 || !zipCode.All(char.IsDigit))
+                return BadRequest("Invalid zip code format");
+
+            // Get first 3 digits for proximity matching (same ~50 mile area)
+            var zipPrefix = zipCode.Substring(0, 3);
+
+            // Query in-person events with matching zip code prefix
+            var events = await _context.Events
+                .Include(e => e.InterestTag)
+                .Include(e => e.Organizer)
+                .Where(e => e.EventType == EventTypeConstants.InPerson
+                         && e.ZipCode != null
+                         && e.ZipCode.StartsWith(zipPrefix)
+                         && e.StartDateTime > DateTime.UtcNow)
+                .OrderBy(e => e.StartDateTime)
+                .Take(50)
+                .ToListAsync();
+
+            var result = events.Select(e => MapEventToDto(e)).ToList();
+            return Ok(result);
         }
     }
 }

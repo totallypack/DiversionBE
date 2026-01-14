@@ -4,6 +4,7 @@ using Diversion;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Diversion.Migrations
 {
     [DbContext(typeof(DiversionDbContext))]
-    partial class DiversionDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260113225031_ReplaceGeocodingWithZipCode")]
+    partial class ReplaceGeocodingWithZipCode
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2019,9 +2022,6 @@ namespace Diversion.Migrations
 
                     b.Property<int?>("YearsOfExperience")
                         .HasColumnType("int");
-
-                    b.Property<string>("ZipCode")
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 

@@ -4,6 +4,7 @@ using Diversion;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Diversion.Migrations
 {
     [DbContext(typeof(DiversionDbContext))]
-    partial class DiversionDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260113063303_AddEventGeocodingFields")]
+    partial class AddEventGeocodingFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -283,6 +286,15 @@ namespace Diversion.Migrations
                     b.Property<Guid>("InterestTagId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("IsGeocoded")
+                        .HasColumnType("bit");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("float");
+
                     b.Property<int?>("MaxAge")
                         .HasColumnType("int");
 
@@ -317,9 +329,6 @@ namespace Diversion.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ZipCode")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -2019,9 +2028,6 @@ namespace Diversion.Migrations
 
                     b.Property<int?>("YearsOfExperience")
                         .HasColumnType("int");
-
-                    b.Property<string>("ZipCode")
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 

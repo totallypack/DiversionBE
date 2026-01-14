@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Diversion.DTOs;
 using Diversion.Models;
+using Diversion.Helpers;
 
 namespace Diversion.Controllers
 {
@@ -21,7 +22,17 @@ namespace Diversion.Controllers
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
-            if (userId == dto.ReceiverId)
+            // Validate caregiver action if acting on behalf
+            var authResult = await CaregiverAuthHelper.ValidateAndAuthorize(
+                _context, userId, dto.ActingOnBehalfOf, CaregiverPermission.ManageFriendships);
+
+            if (!authResult.IsAuthorized)
+                return BadRequest(authResult.ErrorMessage);
+
+            // Use effective user ID (recipient if caregiver, otherwise self)
+            var effectiveUserId = authResult.EffectiveUserId;
+
+            if (effectiveUserId == dto.ReceiverId)
                 return BadRequest("You cannot send a friend request to yourself");
 
             var receiverExists = await _context.Users.AnyAsync(u => u.Id == dto.ReceiverId);
@@ -30,7 +41,7 @@ namespace Diversion.Controllers
 
             // Check if already friends
             var alreadyFriends = await _context.Friendships
-                .AnyAsync(f => f.UserId == userId && f.FriendId == dto.ReceiverId);
+                .AnyAsync(f => f.UserId == effectiveUserId && f.FriendId == dto.ReceiverId);
 
             if (alreadyFriends)
                 return BadRequest("Already friends with this user");
@@ -38,12 +49,12 @@ namespace Diversion.Controllers
             // Check if pending request already exists
             var existingRequest = await _context.FriendRequests
                 .FirstOrDefaultAsync(fr =>
-                    (fr.SenderId == userId && fr.ReceiverId == dto.ReceiverId && fr.Status == FriendRequestStatus.Pending) ||
-                    (fr.SenderId == dto.ReceiverId && fr.ReceiverId == userId && fr.Status == FriendRequestStatus.Pending));
+                    (fr.SenderId == effectiveUserId && fr.ReceiverId == dto.ReceiverId && fr.Status == FriendRequestStatus.Pending) ||
+                    (fr.SenderId == dto.ReceiverId && fr.ReceiverId == effectiveUserId && fr.Status == FriendRequestStatus.Pending));
 
             if (existingRequest != null)
             {
-                if (existingRequest.SenderId == userId)
+                if (existingRequest.SenderId == effectiveUserId)
                     return BadRequest("You already have a pending friend request with this user");
                 else
                     return BadRequest("This user has already sent you a friend request. Check your received requests.");
@@ -52,7 +63,7 @@ namespace Diversion.Controllers
             var friendRequest = new FriendRequest
             {
                 Id = Guid.NewGuid(),
-                SenderId = userId,
+                SenderId = effectiveUserId,
                 ReceiverId = dto.ReceiverId,
                 Status = FriendRequestStatus.Pending,
                 CreatedAt = DateTime.UtcNow

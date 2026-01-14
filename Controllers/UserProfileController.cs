@@ -40,6 +40,15 @@ namespace Diversion.Controllers
                     BusinessCategory = up.BusinessCategory,
                     IsVerified = up.IsVerified,
                     VerifiedAt = up.VerifiedAt,
+                    CaregiverCredentials = up.CaregiverCredentials,
+                    YearsOfExperience = up.YearsOfExperience,
+                    Certifications = up.Certifications,
+                    CareTypes = up.CareTypes,
+                    Specializations = up.Specializations,
+                    IsBackgroundChecked = up.IsBackgroundChecked,
+                    LicenseNumber = up.LicenseNumber,
+                    LicenseExpiry = up.LicenseExpiry,
+                    EmploymentStatus = up.EmploymentStatus,
                     Interests = up.UserInterests.Select(ui => new SubInterestWithInterestDto
                     {
                         Id = ui.SubInterest.Id,
@@ -101,6 +110,15 @@ namespace Diversion.Controllers
                     BusinessCategory = up.BusinessCategory,
                     IsVerified = up.IsVerified,
                     VerifiedAt = up.VerifiedAt,
+                    CaregiverCredentials = up.CaregiverCredentials,
+                    YearsOfExperience = up.YearsOfExperience,
+                    Certifications = up.Certifications,
+                    CareTypes = up.CareTypes,
+                    Specializations = up.Specializations,
+                    IsBackgroundChecked = up.IsBackgroundChecked,
+                    LicenseNumber = up.LicenseNumber,
+                    LicenseExpiry = up.LicenseExpiry,
+                    EmploymentStatus = up.EmploymentStatus,
                     Interests = _context.UserInterests
                         .Where(ui => ui.UserId == userId)
                         .Select(ui => new SubInterestWithInterestDto
@@ -174,7 +192,15 @@ namespace Diversion.Controllers
                 BusinessName = dto.BusinessName,
                 BusinessWebsite = dto.BusinessWebsite,
                 BusinessHours = dto.BusinessHours,
-                BusinessCategory = dto.BusinessCategory
+                BusinessCategory = dto.BusinessCategory,
+                CaregiverCredentials = dto.CaregiverCredentials,
+                YearsOfExperience = dto.YearsOfExperience,
+                Certifications = dto.Certifications,
+                CareTypes = dto.CareTypes,
+                Specializations = dto.Specializations,
+                LicenseNumber = dto.LicenseNumber,
+                LicenseExpiry = dto.LicenseExpiry,
+                EmploymentStatus = dto.EmploymentStatus
             };
 
             _context.UserProfiles.Add(profile);
@@ -196,7 +222,16 @@ namespace Diversion.Controllers
                 BusinessHours = profile.BusinessHours,
                 BusinessCategory = profile.BusinessCategory,
                 IsVerified = profile.IsVerified,
-                VerifiedAt = profile.VerifiedAt
+                VerifiedAt = profile.VerifiedAt,
+                CaregiverCredentials = profile.CaregiverCredentials,
+                YearsOfExperience = profile.YearsOfExperience,
+                Certifications = profile.Certifications,
+                CareTypes = profile.CareTypes,
+                Specializations = profile.Specializations,
+                IsBackgroundChecked = profile.IsBackgroundChecked,
+                LicenseNumber = profile.LicenseNumber,
+                LicenseExpiry = profile.LicenseExpiry,
+                EmploymentStatus = profile.EmploymentStatus
             };
 
             return Ok(result);
@@ -237,6 +272,24 @@ namespace Diversion.Controllers
                 profile.BusinessHours = dto.BusinessHours;
             if (dto.BusinessCategory != null)
                 profile.BusinessCategory = dto.BusinessCategory;
+
+            // Caregiver fields
+            if (dto.CaregiverCredentials != null)
+                profile.CaregiverCredentials = dto.CaregiverCredentials;
+            if (dto.YearsOfExperience.HasValue)
+                profile.YearsOfExperience = dto.YearsOfExperience;
+            if (dto.Certifications != null)
+                profile.Certifications = dto.Certifications;
+            if (dto.CareTypes != null)
+                profile.CareTypes = dto.CareTypes;
+            if (dto.Specializations != null)
+                profile.Specializations = dto.Specializations;
+            if (dto.LicenseNumber != null)
+                profile.LicenseNumber = dto.LicenseNumber;
+            if (dto.LicenseExpiry.HasValue)
+                profile.LicenseExpiry = dto.LicenseExpiry;
+            if (dto.EmploymentStatus != null)
+                profile.EmploymentStatus = dto.EmploymentStatus;
 
             await _context.SaveChangesAsync();
 
