@@ -6,7 +6,9 @@
       "Bash(dotnet ef migrations:*)",
       "Bash(dotnet ef database update:*)",
       "Bash(npm run build:*)",
-      "Bash(del EventCard.jsx EventDetail.jsx CreateEvent.jsx EditEvent.jsx)"
+      "Bash(del EventCard.jsx EventDetail.jsx CreateEvent.jsx EditEvent.jsx)",
+      "Bash(npm install:*)",
+      "Bash(ls:*)"
     ]
   }
 }

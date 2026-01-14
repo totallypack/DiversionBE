@@ -17,6 +17,7 @@ namespace Diversion.DTOs
         public string? StreetAddress { get; set; }
         public string? City { get; set; }
         public string? State { get; set; }
+        public string? ZipCode { get; set; }
         public string? MeetingUrl { get; set; }
         public bool RequiresRsvp { get; set; }
         public decimal? TicketPrice { get; set; }
@@ -58,6 +59,9 @@ namespace Diversion.DTOs
         [StringLength(100)]
         public string? State { get; set; }
 
+        [StringLength(10)]
+        public string? ZipCode { get; set; }
+
         [StringLength(500)]
         public string? MeetingUrl { get; set; }
 
@@ -67,6 +71,9 @@ namespace Diversion.DTOs
         public int? MaxAttendees { get; set; }
         public int? MinAge { get; set; }
         public int? MaxAge { get; set; }
+
+        // Caregiver acting on behalf of recipient
+        public string? ActingOnBehalfOf { get; set; }
     }
 
     public class UpdateEventDto
@@ -95,6 +102,9 @@ namespace Diversion.DTOs
         [StringLength(100)]
         public string? State { get; set; }
 
+        [StringLength(10)]
+        public string? ZipCode { get; set; }
+
         [StringLength(500)]
         public string? MeetingUrl { get; set; }
 
@@ -120,6 +130,7 @@ namespace Diversion.DTOs
         public string? StreetAddress { get; set; }
         public string? City { get; set; }
         public string? State { get; set; }
+        public string? ZipCode { get; set; }
         public string? MeetingUrl { get; set; }
         public bool RequiresRsvp { get; set; }
         public decimal? TicketPrice { get; set; }

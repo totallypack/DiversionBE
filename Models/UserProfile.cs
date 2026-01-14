@@ -14,6 +14,7 @@ namespace Diversion.Models
         public string? Bio { get; set; }
         public string? City { get; set; }
         public string? State { get; set; }
+        public string? ZipCode { get; set; }
         public string? ProfilePicUrl { get; set; }
         public DateTime? DOB {  get; set; }
 

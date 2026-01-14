@@ -20,5 +20,8 @@ namespace Diversion.DTOs
     {
         [Required]
         public string? ReceiverId { get; set; }
+
+        // Caregiver acting on behalf of recipient
+        public string? ActingOnBehalfOf { get; set; }
     }
 }
