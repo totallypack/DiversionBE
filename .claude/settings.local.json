@@ -8,7 +8,8 @@
       "Bash(npm run build:*)",
       "Bash(del EventCard.jsx EventDetail.jsx CreateEvent.jsx EditEvent.jsx)",
       "Bash(npm install:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(findstr:*)"
     ]
   }
 }

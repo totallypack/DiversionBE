@@ -54,6 +54,12 @@ namespace Diversion.Models
         [MaxLength(200)]
         public string? EmploymentStatus { get; set; }  // "Self-Employed", "Agency: [Name]", "Family Caregiver"
 
+        // Moderation fields
+        public bool IsAdmin { get; set; } = false;
+        public bool IsBanned { get; set; } = false;
+        public DateTime? BannedAt { get; set; }
+        public string? BanReason { get; set; }
+
         public IdentityUser? User { get; set; }
         public ICollection<UserInterest> UserInterests { get; set; }
     }

@@ -72,6 +72,14 @@ namespace Diversion.Controllers
             _context.FriendRequests.Add(friendRequest);
             await _context.SaveChangesAsync();
 
+            // Create notification for recipient
+            var senderUser = await _context.Users.FindAsync(effectiveUserId);
+            await NotificationHelper.NotifyFriendRequestAsync(
+                _context,
+                dto.ReceiverId,
+                senderUser?.UserName ?? "Someone",
+                friendRequest.Id.ToString());
+
             var result = await _context.FriendRequests
                 .Where(fr => fr.Id == friendRequest.Id)
                 .Select(fr => new FriendRequestDto
@@ -215,6 +223,13 @@ namespace Diversion.Controllers
                 await _context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
+
+                // Create notification for original sender
+                var currentUser = await _context.Users.FindAsync(userId);
+                await NotificationHelper.NotifyFriendRequestAcceptedAsync(
+                    _context,
+                    friendRequest.SenderId,
+                    currentUser?.UserName ?? "Someone");
 
                 var result = new FriendRequestDto
                 {
