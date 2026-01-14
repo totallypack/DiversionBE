@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Diversion.DTOs;
 using Diversion.Models;
+using Diversion.Helpers;
 
 namespace Diversion.Controllers
 {
@@ -176,6 +177,13 @@ namespace Diversion.Controllers
 
             _context.DirectMessages.Add(message);
             await _context.SaveChangesAsync();
+
+            // Create notification for receiver
+            var sender = await _context.Users.FindAsync(userId);
+            await NotificationHelper.NotifyNewMessageAsync(
+                _context,
+                dto.ReceiverId!,
+                sender?.UserName ?? "Someone");
 
             var result = await _context.DirectMessages
                 .Where(dm => dm.Id == message.Id)

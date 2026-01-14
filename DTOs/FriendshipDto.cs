@@ -23,6 +23,8 @@ namespace Diversion.DTOs
         public string? UserId { get; set; }
         public string? Username { get; set; }
         public string? DisplayName { get; set; }
+        public string? Bio { get; set; }
+        public string? ProfilePicUrl { get; set; }
         public string? City { get; set; }
         public string? State { get; set; }
         public bool IsFriend { get; set; }

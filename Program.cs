@@ -1,4 +1,5 @@
 using Diversion;
+using Diversion.Middleware;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -74,6 +75,7 @@ app.UseRouting();
 app.UseCors();
 
 app.UseAuthentication();
+app.UseMiddleware<BanCheckMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();

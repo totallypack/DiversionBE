@@ -21,6 +21,10 @@ namespace Diversion
         public DbSet<DirectMessage> DirectMessages { get; set; }
         public DbSet<CareRelationship> CareRelationships { get; set; }
         public DbSet<CaregiverRequest> CaregiverRequests { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Report> Reports { get; set; }
+        public DbSet<UserBlock> UserBlocks { get; set; }
+        public DbSet<ModerationAction> ModerationActions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -238,6 +242,89 @@ namespace Diversion
 
             modelBuilder.Entity<CaregiverRequest>()
                 .HasIndex(cgr => new { cgr.SenderId, cgr.RecipientId, cgr.Status });
+
+            // Notification configuration
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.User)
+                .WithMany()
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Notification>()
+                .HasIndex(n => new { n.UserId, n.IsRead, n.CreatedAt });
+
+            modelBuilder.Entity<Notification>()
+                .HasIndex(n => new { n.UserId, n.Type, n.IsRead });
+
+            // Report configuration
+            modelBuilder.Entity<Report>()
+                .HasOne(r => r.Reporter)
+                .WithMany()
+                .HasForeignKey(r => r.ReporterId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Report>()
+                .HasOne(r => r.ReportedUser)
+                .WithMany()
+                .HasForeignKey(r => r.ReportedUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Report>()
+                .HasOne(r => r.ReviewedByAdmin)
+                .WithMany()
+                .HasForeignKey(r => r.ReviewedByAdminId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Report>()
+                .HasIndex(r => new { r.Status, r.CreatedAt });
+
+            modelBuilder.Entity<Report>()
+                .HasIndex(r => new { r.ReportedUserId, r.Status });
+
+            // UserBlock configuration
+            modelBuilder.Entity<UserBlock>()
+                .HasOne(ub => ub.Blocker)
+                .WithMany()
+                .HasForeignKey(ub => ub.BlockerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<UserBlock>()
+                .HasOne(ub => ub.BlockedUser)
+                .WithMany()
+                .HasForeignKey(ub => ub.BlockedUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<UserBlock>()
+                .HasIndex(ub => new { ub.BlockerId, ub.BlockedUserId })
+                .IsUnique();
+
+            modelBuilder.Entity<UserBlock>()
+                .HasIndex(ub => new { ub.BlockedUserId, ub.BlockerId });
+
+            // ModerationAction configuration
+            modelBuilder.Entity<ModerationAction>()
+                .HasOne(ma => ma.Admin)
+                .WithMany()
+                .HasForeignKey(ma => ma.AdminId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ModerationAction>()
+                .HasOne(ma => ma.TargetUser)
+                .WithMany()
+                .HasForeignKey(ma => ma.TargetUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ModerationAction>()
+                .HasOne(ma => ma.RelatedReport)
+                .WithMany()
+                .HasForeignKey(ma => ma.RelatedReportId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ModerationAction>()
+                .HasIndex(ma => new { ma.TargetUserId, ma.CreatedAt });
+
+            modelBuilder.Entity<ModerationAction>()
+                .HasIndex(ma => new { ma.AdminId, ma.CreatedAt });
 
             // Seed Data - Interests
             var outdoorsId = Guid.Parse("11111111-1111-1111-1111-111111111111");

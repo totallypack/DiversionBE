@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Diversion.DTOs;
 using Diversion.Models;
+using Diversion.Helpers;
+using Diversion.Constants;
 
 namespace Diversion.Controllers
 {
@@ -111,6 +113,18 @@ namespace Diversion.Controllers
             _context.EventAttendees.Add(attendee);
             await _context.SaveChangesAsync();
 
+            // Notify event organizer if someone RSVPs "Going"
+            if (dto.Status == AttendeeStatusConstants.Going && userId != eventToRsvp.OrganizerId)
+            {
+                var attendeeUser = await _context.Users.FindAsync(userId);
+                await NotificationHelper.NotifyEventRSVPAsync(
+                    _context,
+                    eventToRsvp.OrganizerId,
+                    attendeeUser?.UserName ?? "Someone",
+                    eventToRsvp.Id.ToString(),
+                    eventToRsvp.Title);
+            }
+
             var result = await _context.EventAttendees
                 .Where(ea => ea.Id == attendee.Id)
                 .Select(ea => new EventAttendeeDto
@@ -135,14 +149,30 @@ namespace Diversion.Controllers
                 return Unauthorized();
 
             var attendee = await _context.EventAttendees
+                .Include(ea => ea.Event)
                 .FirstOrDefaultAsync(ea => ea.Id == id && ea.UserId == userId);
 
             if (attendee == null)
                 return NotFound();
 
+            var previousStatus = attendee.Status;
             attendee.Status = dto.Status;
 
             await _context.SaveChangesAsync();
+
+            // Notify event organizer if status changes to "Going" and wasn't "Going" before
+            if (dto.Status == AttendeeStatusConstants.Going &&
+                previousStatus != AttendeeStatusConstants.Going &&
+                userId != attendee.Event.OrganizerId)
+            {
+                var attendeeUser = await _context.Users.FindAsync(userId);
+                await NotificationHelper.NotifyEventRSVPAsync(
+                    _context,
+                    attendee.Event.OrganizerId,
+                    attendeeUser?.UserName ?? "Someone",
+                    attendee.Event.Id.ToString(),
+                    attendee.Event.Title);
+            }
 
             return NoContent();
         }
