@@ -84,6 +84,7 @@ namespace Diversion.Controllers
             await _context.SaveChangesAsync();
 
             var result = await _context.Reports
+                .AsNoTracking()
                 .Where(r => r.Id == report.Id)
                 .Select(r => new ReportDto
                 {
@@ -113,6 +114,7 @@ namespace Diversion.Controllers
                 return Unauthorized();
 
             var reports = await _context.Reports
+                .AsNoTracking()
                 .Where(r => r.ReporterId == userId)
                 .Select(r => new ReportDto
                 {
@@ -143,6 +145,7 @@ namespace Diversion.Controllers
                 return Unauthorized();
 
             var report = await _context.Reports
+                .AsNoTracking()
                 .Where(r => r.Id == id && r.ReporterId == userId)
                 .Select(r => new ReportDto
                 {

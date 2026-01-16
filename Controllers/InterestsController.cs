@@ -15,6 +15,7 @@ namespace Diversion.Controllers
         public async Task<ActionResult<List<InterestDto>>> GetAllInterests()
         {
             var interests = await _context.Interests
+                .AsNoTracking()
                 .Select(i => new InterestDto
                 {
                     Id = i.Id,
@@ -30,6 +31,7 @@ namespace Diversion.Controllers
         public async Task<ActionResult<InterestWithSubInterestsDto>> GetInterestById(Guid id)
         {
             var interest = await _context.Interests
+                .AsNoTracking()
                 .Where(i => i.Id == id)
                 .Select(i => new InterestWithSubInterestsDto
                 {
@@ -58,6 +60,7 @@ namespace Diversion.Controllers
         public async Task<ActionResult<List<InterestWithSubInterestsDto>>> GetAllInterestsWithSubinterests()
         {
             var interests = await _context.Interests
+                .AsNoTracking()
                 .Select(i => new InterestWithSubInterestsDto
                 {
                     Id = i.Id,

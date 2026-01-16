@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Diversion.DTOs;
+using Diversion.Helpers;
 using Diversion.Models;
 
 namespace Diversion.Controllers
@@ -21,22 +22,24 @@ namespace Diversion.Controllers
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
-            var friendships = await _context.Friendships
-                .Where(f => f.UserId == userId)
-                .Select(f => new FriendshipDto
-                {
-                    Id = f.Id,
-                    UserId = f.UserId,
-                    FriendId = f.FriendId,
-                    FriendUsername = f.Friend.UserName ?? "",
-                    FriendDisplayName = _context.UserProfiles
-                        .Where(up => up.UserId == f.FriendId)
-                        .Select(up => up.DisplayName)
-                        .FirstOrDefault(),
-                    CreatedAt = f.CreatedAt
-                })
-                .OrderBy(f => f.FriendDisplayName)
-                .ToListAsync();
+            // Get list of blocked user IDs (bidirectional)
+            var blockedUserIds = await UserFilterHelper.GetBlockedUserIdsAsync(_context, userId);
+
+            // Use LEFT JOIN to get UserProfile data in a single query
+            var friendships = await (from f in _context.Friendships.AsNoTracking()
+                                     join up in _context.UserProfiles on f.FriendId equals up.UserId into profiles
+                                     from profile in profiles.DefaultIfEmpty()
+                                     where f.UserId == userId && !blockedUserIds.Contains(f.FriendId)
+                                     orderby profile.DisplayName
+                                     select new FriendshipDto
+                                     {
+                                         Id = f.Id,
+                                         UserId = f.UserId,
+                                         FriendId = f.FriendId,
+                                         FriendUsername = f.Friend.UserName ?? "",
+                                         FriendDisplayName = profile.DisplayName,
+                                         CreatedAt = f.CreatedAt
+                                     }).ToListAsync();
 
             return Ok(friendships);
         }
@@ -52,32 +55,31 @@ namespace Diversion.Controllers
                 return BadRequest("Search query must be at least 2 characters");
 
             var myFriendIds = await _context.Friendships
+                .AsNoTracking()
                 .Where(f => f.UserId == userId)
                 .Select(f => f.FriendId)
                 .ToListAsync();
 
-            var users = await _context.Users
-                .Where(u => u.UserName != null && u.UserName.Contains(query) && u.Id != userId)
-                .Take(20)
-                .Select(u => new UserSearchDto
-                {
-                    UserId = u.Id,
-                    Username = u.UserName ?? "",
-                    DisplayName = _context.UserProfiles
-                        .Where(up => up.UserId == u.Id)
-                        .Select(up => up.DisplayName)
-                        .FirstOrDefault(),
-                    City = _context.UserProfiles
-                        .Where(up => up.UserId == u.Id)
-                        .Select(up => up.City)
-                        .FirstOrDefault(),
-                    State = _context.UserProfiles
-                        .Where(up => up.UserId == u.Id)
-                        .Select(up => up.State)
-                        .FirstOrDefault(),
-                    IsFriend = myFriendIds.Contains(u.Id)
-                })
-                .ToListAsync();
+            // Get blocked and banned user IDs
+            var excludedUserIds = await UserFilterHelper.GetExcludedUserIdsAsync(_context, userId);
+
+            // Use LEFT JOIN to get UserProfile data in a single query
+            var users = await (from u in _context.Users.AsNoTracking()
+                               join up in _context.UserProfiles on u.Id equals up.UserId into profiles
+                               from profile in profiles.DefaultIfEmpty()
+                               where u.UserName != null &&
+                                     u.UserName.Contains(query) &&
+                                     u.Id != userId &&
+                                     !excludedUserIds.Contains(u.Id)
+                               select new UserSearchDto
+                               {
+                                   UserId = u.Id,
+                                   Username = u.UserName ?? "",
+                                   DisplayName = profile.DisplayName,
+                                   City = profile.City,
+                                   State = profile.State,
+                                   IsFriend = myFriendIds.Contains(u.Id)
+                               }).Take(20).ToListAsync();
 
             return Ok(users);
         }
@@ -128,21 +130,20 @@ namespace Diversion.Controllers
 
                 await transaction.CommitAsync();
 
-                var result = await _context.Friendships
-                    .Where(f => f.Id == friendship1.Id)
-                    .Select(f => new FriendshipDto
-                    {
-                        Id = f.Id,
-                        UserId = f.UserId,
-                        FriendId = f.FriendId,
-                        FriendUsername = f.Friend.UserName ?? "",
-                        FriendDisplayName = _context.UserProfiles
-                            .Where(up => up.UserId == f.FriendId)
-                            .Select(up => up.DisplayName)
-                            .FirstOrDefault(),
-                        CreatedAt = f.CreatedAt
-                    })
-                    .FirstOrDefaultAsync();
+                // Use LEFT JOIN to get UserProfile data in a single query
+                var result = await (from f in _context.Friendships
+                                    join up in _context.UserProfiles on f.FriendId equals up.UserId into profiles
+                                    from profile in profiles.DefaultIfEmpty()
+                                    where f.Id == friendship1.Id
+                                    select new FriendshipDto
+                                    {
+                                        Id = f.Id,
+                                        UserId = f.UserId,
+                                        FriendId = f.FriendId,
+                                        FriendUsername = f.Friend.UserName ?? "",
+                                        FriendDisplayName = profile.DisplayName,
+                                        CreatedAt = f.CreatedAt
+                                    }).FirstOrDefaultAsync();
 
                 return CreatedAtAction(nameof(GetMyFriends), result);
             }
@@ -188,6 +189,7 @@ namespace Diversion.Controllers
                 return Unauthorized();
 
             var areFriends = await _context.Friendships
+                .AsNoTracking()
                 .AnyAsync(f => f.UserId == userId && f.FriendId == otherUserId);
 
             return Ok(areFriends);

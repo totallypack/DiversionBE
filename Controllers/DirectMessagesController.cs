@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Diversion.DTOs;
+using Diversion.Hubs;
 using Diversion.Models;
 using Diversion.Helpers;
 
@@ -11,9 +13,14 @@ namespace Diversion.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class DirectMessagesController(DiversionDbContext context) : ControllerBase
+    public class DirectMessagesController(
+        DiversionDbContext context,
+        IHubContext<NotificationHub> notificationHub,
+        IHubContext<MessageHub> messageHub) : ControllerBase
     {
         private readonly DiversionDbContext _context = context;
+        private readonly IHubContext<NotificationHub> _notificationHub = notificationHub;
+        private readonly IHubContext<MessageHub> _messageHub = messageHub;
 
         [HttpGet("conversations")]
         public async Task<ActionResult<IEnumerable<ConversationDto>>> GetConversations()
@@ -22,26 +29,34 @@ namespace Diversion.Controllers
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
+            // Get blocked user IDs
+            var blockedUserIds = await UserFilterHelper.GetBlockedUserIdsAsync(_context, userId);
+
             // Get all unique users that current user has messaged with
             var sentTo = await _context.DirectMessages
+                .AsNoTracking()
                 .Where(dm => dm.SenderId == userId)
                 .Select(dm => dm.ReceiverId)
                 .Distinct()
                 .ToListAsync();
 
             var receivedFrom = await _context.DirectMessages
+                .AsNoTracking()
                 .Where(dm => dm.ReceiverId == userId)
                 .Select(dm => dm.SenderId)
                 .Distinct()
                 .ToListAsync();
 
-            var allUserIds = sentTo.Union(receivedFrom).Distinct().ToList();
+            var allUserIds = sentTo.Union(receivedFrom).Distinct()
+                .Where(id => !blockedUserIds.Contains(id))
+                .ToList();
 
             var conversations = new List<ConversationDto>();
 
             foreach (var otherUserId in allUserIds)
             {
                 var lastMessage = await _context.DirectMessages
+                    .AsNoTracking()
                     .Where(dm =>
                         (dm.SenderId == userId && dm.ReceiverId == otherUserId) ||
                         (dm.SenderId == otherUserId && dm.ReceiverId == userId))
@@ -49,11 +64,13 @@ namespace Diversion.Controllers
                     .FirstOrDefaultAsync();
 
                 var unreadCount = await _context.DirectMessages
+                    .AsNoTracking()
                     .Where(dm => dm.SenderId == otherUserId && dm.ReceiverId == userId && !dm.IsRead)
                     .CountAsync();
 
-                var otherUser = await _context.Users.FindAsync(otherUserId);
+                var otherUser = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == otherUserId);
                 var otherProfile = await _context.UserProfiles
+                    .AsNoTracking()
                     .FirstOrDefaultAsync(up => up.UserId == otherUserId);
 
                 if (lastMessage != null && otherUser != null)
@@ -87,8 +104,19 @@ namespace Diversion.Controllers
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
+            // Check if users are blocked
+            var areBlocked = await _context.UserBlocks
+                .AsNoTracking()
+                .AnyAsync(ub =>
+                    (ub.BlockerId == userId && ub.BlockedUserId == otherUserId) ||
+                    (ub.BlockerId == otherUserId && ub.BlockedUserId == userId));
+
+            if (areBlocked)
+                return Forbid();
+
             // Verify users are friends
             var areFriends = await _context.Friendships
+                .AsNoTracking()
                 .AnyAsync(f => f.UserId == userId && f.FriendId == otherUserId);
 
             if (!areFriends)
@@ -98,6 +126,7 @@ namespace Diversion.Controllers
                 take = 100;
 
             var messages = await _context.DirectMessages
+                .AsNoTracking()
                 .Where(dm =>
                     (dm.SenderId == userId && dm.ReceiverId == otherUserId) ||
                     (dm.SenderId == otherUserId && dm.ReceiverId == userId))
@@ -158,8 +187,19 @@ namespace Diversion.Controllers
             if (userId == dto.ReceiverId)
                 return BadRequest("Cannot send message to yourself");
 
+            // Check if users are blocked
+            var areBlocked = await _context.UserBlocks
+                .AsNoTracking()
+                .AnyAsync(ub =>
+                    (ub.BlockerId == userId && ub.BlockedUserId == dto.ReceiverId) ||
+                    (ub.BlockerId == dto.ReceiverId && ub.BlockedUserId == userId));
+
+            if (areBlocked)
+                return BadRequest("Cannot send message to this user");
+
             // Verify users are friends
             var areFriends = await _context.Friendships
+                .AsNoTracking()
                 .AnyAsync(f => f.UserId == userId && f.FriendId == dto.ReceiverId);
 
             if (!areFriends)
@@ -178,14 +218,36 @@ namespace Diversion.Controllers
             _context.DirectMessages.Add(message);
             await _context.SaveChangesAsync();
 
-            // Create notification for receiver
+            // Create notification for receiver (with real-time push)
             var sender = await _context.Users.FindAsync(userId);
             await NotificationHelper.NotifyNewMessageAsync(
                 _context,
                 dto.ReceiverId!,
-                sender?.UserName ?? "Someone");
+                sender?.UserName ?? "Someone",
+                _notificationHub);
+
+            // Get sender profile for display name
+            var senderProfile = await _context.UserProfiles
+                .AsNoTracking()
+                .Where(up => up.UserId == userId)
+                .Select(up => up.DisplayName)
+                .FirstOrDefaultAsync();
+
+            // Push real-time message to receiver via SignalR
+            await _messageHub.Clients.Group($"user_{dto.ReceiverId}").SendAsync("ReceiveMessage", new
+            {
+                id = message.Id,
+                senderId = message.SenderId,
+                senderUsername = sender?.UserName ?? "",
+                senderDisplayName = senderProfile,
+                receiverId = message.ReceiverId,
+                content = message.Content,
+                sentAt = message.SentAt,
+                isRead = false
+            });
 
             var result = await _context.DirectMessages
+                .AsNoTracking()
                 .Where(dm => dm.Id == message.Id)
                 .Select(dm => new DirectMessageDto
                 {
@@ -219,8 +281,14 @@ namespace Diversion.Controllers
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
+            // Get blocked user IDs
+            var blockedUserIds = await UserFilterHelper.GetBlockedUserIdsAsync(_context, userId);
+
             var count = await _context.DirectMessages
-                .Where(dm => dm.ReceiverId == userId && !dm.IsRead)
+                .AsNoTracking()
+                .Where(dm => dm.ReceiverId == userId &&
+                           !dm.IsRead &&
+                           !blockedUserIds.Contains(dm.SenderId))
                 .CountAsync();
 
             return Ok(count);

@@ -26,6 +26,7 @@ namespace Diversion.Controllers
 
             // Verify user is a member
             var isMember = await _context.CommunityMemberships
+                .AsNoTracking()
                 .AnyAsync(cm => cm.CommunityId == communityId && cm.UserId == userId);
 
             if (!isMember)
@@ -35,6 +36,7 @@ namespace Diversion.Controllers
                 take = 100;
 
             var messages = await _context.CommunityMessages
+                .AsNoTracking()
                 .Where(cm => cm.CommunityId == communityId)
                 .OrderByDescending(cm => cm.SentAt)
                 .Skip(skip)
@@ -78,6 +80,7 @@ namespace Diversion.Controllers
 
             // Verify user is a member
             var isMember = await _context.CommunityMemberships
+                .AsNoTracking()
                 .AnyAsync(cm => cm.CommunityId == communityId && cm.UserId == userId);
 
             if (!isMember)
@@ -87,6 +90,7 @@ namespace Diversion.Controllers
             if (dto.ReplyToMessageId.HasValue)
             {
                 var replyToExists = await _context.CommunityMessages
+                    .AsNoTracking()
                     .AnyAsync(cm => cm.Id == dto.ReplyToMessageId.Value && cm.CommunityId == communityId);
 
                 if (!replyToExists)
@@ -107,6 +111,7 @@ namespace Diversion.Controllers
             await _context.SaveChangesAsync();
 
             var result = await _context.CommunityMessages
+                .AsNoTracking()
                 .Where(cm => cm.Id == message.Id)
                 .Select(cm => new CommunityMessageDto
                 {

@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Diversion.DTOs;
+using Diversion.Hubs;
 using Diversion.Models;
 using Diversion.Helpers;
 using Diversion.Constants;
@@ -12,14 +14,16 @@ namespace Diversion.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class EventAttendeesController(DiversionDbContext context) : ControllerBase
+    public class EventAttendeesController(DiversionDbContext context, IHubContext<NotificationHub> notificationHub) : ControllerBase
     {
         private readonly DiversionDbContext _context = context;
+        private readonly IHubContext<NotificationHub> _notificationHub = notificationHub;
 
         [HttpGet("event/{eventId}")]
         public async Task<ActionResult<IEnumerable<EventAttendeeDto>>> GetEventAttendees(Guid eventId)
         {
             var attendees = await _context.EventAttendees
+                .AsNoTracking()
                 .Where(ea => ea.EventId == eventId)
                 .Select(ea => new EventAttendeeDto
                 {
@@ -43,6 +47,7 @@ namespace Diversion.Controllers
                 return Unauthorized();
 
             var attendees = await _context.EventAttendees
+                .AsNoTracking()
                 .Where(ea => ea.UserId == userId)
                 .Select(ea => new EventAttendeeDto
                 {
@@ -66,6 +71,7 @@ namespace Diversion.Controllers
                 return Unauthorized();
 
             var attendee = await _context.EventAttendees
+                .AsNoTracking()
                 .Where(ea => ea.EventId == eventId && ea.UserId == userId)
                 .Select(ea => new EventAttendeeDto
                 {
@@ -122,10 +128,12 @@ namespace Diversion.Controllers
                     eventToRsvp.OrganizerId,
                     attendeeUser?.UserName ?? "Someone",
                     eventToRsvp.Id.ToString(),
-                    eventToRsvp.Title);
+                    eventToRsvp.Title,
+                    _notificationHub);
             }
 
             var result = await _context.EventAttendees
+                .AsNoTracking()
                 .Where(ea => ea.Id == attendee.Id)
                 .Select(ea => new EventAttendeeDto
                 {
@@ -171,7 +179,8 @@ namespace Diversion.Controllers
                     attendee.Event.OrganizerId,
                     attendeeUser?.UserName ?? "Someone",
                     attendee.Event.Id.ToString(),
-                    attendee.Event.Title);
+                    attendee.Event.Title,
+                    _notificationHub);
             }
 
             return NoContent();

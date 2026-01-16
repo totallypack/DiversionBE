@@ -22,6 +22,7 @@ namespace Diversion.Controllers
                 return Unauthorized();
 
             var blockedUsers = await _context.UserBlocks
+                .AsNoTracking()
                 .Where(ub => ub.BlockerId == userId)
                 .Select(ub => new UserBlockDto
                 {
@@ -73,6 +74,7 @@ namespace Diversion.Controllers
             await _context.SaveChangesAsync();
 
             var result = await _context.UserBlocks
+                .AsNoTracking()
                 .Where(ub => ub.Id == userBlock.Id)
                 .Select(ub => new UserBlockDto
                 {
@@ -118,10 +120,12 @@ namespace Diversion.Controllers
 
             // Check if current user blocked the other user
             var userBlockedOther = await _context.UserBlocks
+                .AsNoTracking()
                 .AnyAsync(ub => ub.BlockerId == userId && ub.BlockedUserId == otherUserId);
 
             // Check if other user blocked current user
             var otherBlockedUser = await _context.UserBlocks
+                .AsNoTracking()
                 .AnyAsync(ub => ub.BlockerId == otherUserId && ub.BlockedUserId == userId);
 
             return Ok(new
@@ -136,6 +140,7 @@ namespace Diversion.Controllers
         public static async Task<bool> AreUsersBlockedAsync(DiversionDbContext context, string userId1, string userId2)
         {
             return await context.UserBlocks
+                .AsNoTracking()
                 .AnyAsync(ub =>
                     (ub.BlockerId == userId1 && ub.BlockedUserId == userId2) ||
                     (ub.BlockerId == userId2 && ub.BlockedUserId == userId1));

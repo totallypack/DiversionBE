@@ -1,5 +1,7 @@
 using Diversion.Models;
 using Diversion.Constants;
+using Diversion.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Diversion.Helpers;
 
@@ -11,7 +13,8 @@ public static class NotificationHelper
         string type,
         string message,
         string? referenceId = null,
-        string? actionUrl = null)
+        string? actionUrl = null,
+        IHubContext<NotificationHub>? hubContext = null)
     {
         var notification = new Notification
         {
@@ -25,6 +28,21 @@ public static class NotificationHelper
 
         context.Notifications.Add(notification);
         await context.SaveChangesAsync();
+
+        // Push real-time notification via SignalR if hub context is available
+        if (hubContext != null)
+        {
+            await hubContext.Clients.Group($"user_{userId}").SendAsync("ReceiveNotification", new
+            {
+                id = notification.Id,
+                type = notification.Type,
+                message = notification.Message,
+                referenceId = notification.ReferenceId,
+                actionUrl = notification.ActionUrl,
+                createdAt = notification.CreatedAt,
+                isRead = false
+            });
+        }
     }
 
     // Convenience methods for common notification types
@@ -32,7 +50,8 @@ public static class NotificationHelper
         DiversionDbContext context,
         string recipientId,
         string senderUsername,
-        string requestId)
+        string requestId,
+        IHubContext<NotificationHub>? hubContext = null)
     {
         await CreateNotificationAsync(
             context,
@@ -40,13 +59,15 @@ public static class NotificationHelper
             NotificationTypeConstants.FriendRequest,
             $"{senderUsername} sent you a friend request",
             requestId,
-            "/friends/requests");
+            "/friends/requests",
+            hubContext);
     }
 
     public static async Task NotifyFriendRequestAcceptedAsync(
         DiversionDbContext context,
         string senderId,
-        string accepterUsername)
+        string accepterUsername,
+        IHubContext<NotificationHub>? hubContext = null)
     {
         await CreateNotificationAsync(
             context,
@@ -54,7 +75,8 @@ public static class NotificationHelper
             NotificationTypeConstants.FriendRequestAccepted,
             $"{accepterUsername} accepted your friend request",
             null,
-            "/friends");
+            "/friends",
+            hubContext);
     }
 
     public static async Task NotifyEventRSVPAsync(
@@ -62,7 +84,8 @@ public static class NotificationHelper
         string organizerId,
         string attendeeUsername,
         string eventId,
-        string eventTitle)
+        string eventTitle,
+        IHubContext<NotificationHub>? hubContext = null)
     {
         await CreateNotificationAsync(
             context,
@@ -70,13 +93,15 @@ public static class NotificationHelper
             NotificationTypeConstants.EventRSVP,
             $"{attendeeUsername} is attending \"{eventTitle}\"",
             eventId,
-            $"/events/{eventId}");
+            $"/events/{eventId}",
+            hubContext);
     }
 
     public static async Task NotifyNewMessageAsync(
         DiversionDbContext context,
         string receiverId,
-        string senderUsername)
+        string senderUsername,
+        IHubContext<NotificationHub>? hubContext = null)
     {
         await CreateNotificationAsync(
             context,
@@ -84,14 +109,16 @@ public static class NotificationHelper
             NotificationTypeConstants.NewMessage,
             $"New message from {senderUsername}",
             null,
-            "/messages");
+            "/messages",
+            hubContext);
     }
 
     public static async Task NotifyCaregiverRequestAsync(
         DiversionDbContext context,
         string recipientId,
         string senderUsername,
-        string requestId)
+        string requestId,
+        IHubContext<NotificationHub>? hubContext = null)
     {
         await CreateNotificationAsync(
             context,
@@ -99,13 +126,15 @@ public static class NotificationHelper
             NotificationTypeConstants.CaregiverRequest,
             $"{senderUsername} sent you a caregiver request",
             requestId,
-            "/caregiver/requests");
+            "/caregiver/requests",
+            hubContext);
     }
 
     public static async Task NotifyCaregiverRequestAcceptedAsync(
         DiversionDbContext context,
         string senderId,
-        string accepterUsername)
+        string accepterUsername,
+        IHubContext<NotificationHub>? hubContext = null)
     {
         await CreateNotificationAsync(
             context,
@@ -113,6 +142,7 @@ public static class NotificationHelper
             NotificationTypeConstants.CaregiverRequestAccepted,
             $"{accepterUsername} accepted your caregiver request",
             null,
-            "/caregiver/recipients");
+            "/caregiver/recipients",
+            hubContext);
     }
 }

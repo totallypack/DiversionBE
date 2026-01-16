@@ -15,6 +15,7 @@ namespace Diversion.Controllers
         public async Task<ActionResult<IEnumerable<SubInterestDto>>> GetSubInterests()
         {
             var subInterests = await _context.SubInterests
+                .AsNoTracking()
                 .Select(si => new SubInterestDto
                 {
                     Id = si.Id,
@@ -31,6 +32,7 @@ namespace Diversion.Controllers
         public async Task<ActionResult<SubInterestWithInterestDto>> GetSubInterest(Guid id)
         {
             var subInterest = await _context.SubInterests
+                .AsNoTracking()
                 .Where(si => si.Id == id)
                 .Select(si => new SubInterestWithInterestDto
                 {

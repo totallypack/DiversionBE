@@ -9,7 +9,12 @@
       "Bash(del EventCard.jsx EventDetail.jsx CreateEvent.jsx EditEvent.jsx)",
       "Bash(npm install:*)",
       "Bash(ls:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(grep:*)",
+      "Bash(dotnet add:*)",
+      "Bash(dotnet restore:*)",
+      "Bash(dotnet test:*)",
+      "Bash(dir:*)"
     ]
   }
 }

@@ -22,6 +22,7 @@ namespace Diversion.Controllers
                 return Unauthorized();
 
             var interests = await _context.UserInterests
+                .AsNoTracking()
                 .Where(ui => ui.UserId == userId)
                 .Select(ui => new UserInterestWithDetailsDto
                 {
@@ -55,12 +56,14 @@ namespace Diversion.Controllers
                 return Unauthorized();
 
             var subInterestExists = await _context.SubInterests
+                .AsNoTracking()
                 .AnyAsync(si => si.Id == dto.SubInterestId);
 
             if (!subInterestExists)
                 return BadRequest("SubInterest not found");
 
             var existingInterest = await _context.UserInterests
+                .AsNoTracking()
                 .FirstOrDefaultAsync(ui => ui.UserId == userId && ui.SubInterestId == dto.SubInterestId);
 
             if (existingInterest != null)
