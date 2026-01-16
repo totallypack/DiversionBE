@@ -14,7 +14,15 @@ namespace Diversion.Controllers
     {
         private readonly DiversionDbContext _context = context;
 
+        /// <summary>
+        /// Retrieves the authenticated user's own profile
+        /// </summary>
+        /// <returns>Current user's profile including interests and account-type-specific fields</returns>
+        /// <response code="200">Returns the user's profile</response>
+        /// <response code="401">Unauthorized - authentication required</response>
         [HttpGet("me")]
+        [ProducesResponseType(typeof(UserProfileWithInterestsDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult<UserProfileWithInterestsDto>> GetMyProfile()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -22,6 +30,7 @@ namespace Diversion.Controllers
                 return Unauthorized();
 
             var profile = await _context.UserProfiles
+                .AsNoTracking()
                 .Where(up => up.UserId == userId)
                 .Select(up => new UserProfileWithInterestsDto
                 {
@@ -66,7 +75,7 @@ namespace Diversion.Controllers
 
             if (profile == null)
             {
-                var user = await _context.Users.FindAsync(userId);
+                var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
                 return Ok(new UserProfileWithInterestsDto
                 {
                     Id = Guid.Empty,
@@ -84,14 +93,24 @@ namespace Diversion.Controllers
             return Ok(profile);
         }
 
+        /// <summary>
+        /// Retrieves a specific user's profile by user ID
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user</param>
+        /// <returns>User profile including interests, bio, location, and account type</returns>
+        /// <response code="200">Returns the user profile</response>
+        /// <response code="404">User not found</response>
         [HttpGet("{userId}")]
+        [ProducesResponseType(typeof(UserProfileWithInterestsDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<UserProfileWithInterestsDto>> GetUserProfile(string userId)
         {
-            var userExists = await _context.Users.AnyAsync(u => u.Id == userId);
+            var userExists = await _context.Users.AsNoTracking().AnyAsync(u => u.Id == userId);
             if (!userExists)
                 return NotFound(new { message = "User not found" });
 
             var profile = await _context.UserProfiles
+                .AsNoTracking()
                 .Where(up => up.UserId == userId)
                 .Select(up => new UserProfileWithInterestsDto
                 {
@@ -140,7 +159,7 @@ namespace Diversion.Controllers
 
             if (profile == null)
             {
-                var user = await _context.Users.FindAsync(userId);
+                var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
                 return Ok(new UserProfileWithInterestsDto
                 {
                     Id = Guid.Empty,
@@ -166,6 +185,7 @@ namespace Diversion.Controllers
                 return Unauthorized();
 
             var existingProfile = await _context.UserProfiles
+                .AsNoTracking()
                 .FirstOrDefaultAsync(up => up.UserId == userId);
 
             if (existingProfile != null)

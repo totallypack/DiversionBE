@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Diversion.DTOs;
+using Diversion.Hubs;
+using Diversion.Helpers;
 using Diversion.Models;
 
 namespace Diversion.Controllers
@@ -10,9 +13,10 @@ namespace Diversion.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class CaregiverRequestController(DiversionDbContext context) : ControllerBase
+    public class CaregiverRequestController(DiversionDbContext context, IHubContext<NotificationHub> notificationHub) : ControllerBase
     {
         private readonly DiversionDbContext _context = context;
+        private readonly IHubContext<NotificationHub> _notificationHub = notificationHub;
 
         [HttpPost("send")]
         public async Task<ActionResult<CaregiverRequestDto>> SendCaregiverRequest([FromBody] SendCaregiverRequestDto dto)
@@ -31,7 +35,7 @@ namespace Diversion.Controllers
             if (userId == dto.RecipientId)
                 return BadRequest("You cannot send a caregiver request to yourself");
 
-            var recipientExists = await _context.Users.AnyAsync(u => u.Id == dto.RecipientId);
+            var recipientExists = await _context.Users.AsNoTracking().AnyAsync(u => u.Id == dto.RecipientId);
             if (!recipientExists)
                 return BadRequest("User not found");
 
@@ -67,6 +71,15 @@ namespace Diversion.Controllers
 
             _context.CaregiverRequests.Add(caregiverRequest);
             await _context.SaveChangesAsync();
+
+            // Create notification for recipient (with real-time push)
+            var senderUser = await _context.Users.FindAsync(userId);
+            await NotificationHelper.NotifyCaregiverRequestAsync(
+                _context,
+                dto.RecipientId!,
+                senderUser?.UserName ?? "Someone",
+                caregiverRequest.Id.ToString(),
+                _notificationHub);
 
             var result = await _context.CaregiverRequests
                 .Where(cgr => cgr.Id == caregiverRequest.Id)
@@ -217,6 +230,14 @@ namespace Diversion.Controllers
                 _context.CareRelationships.Add(careRelationship);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+
+                // Create notification for caregiver sender (with real-time push)
+                var accepterUser = await _context.Users.FindAsync(userId);
+                await NotificationHelper.NotifyCaregiverRequestAcceptedAsync(
+                    _context,
+                    request.SenderId,
+                    accepterUser?.UserName ?? "Someone",
+                    _notificationHub);
 
                 var result = await _context.CaregiverRequests
                     .Where(cgr => cgr.Id == requestId)

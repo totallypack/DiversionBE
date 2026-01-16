@@ -1,4 +1,5 @@
 using Diversion;
+using Diversion.Hubs;
 using Diversion.Middleware;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -58,11 +59,41 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 
+// Configure SignalR for real-time features
+builder.Services.AddSignalR();
+
+// Configure Swagger/OpenAPI
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new()
+    {
+        Title = "Diversion API",
+        Version = "v0.1",
+        Description = "A social networking API for connecting people based on shared interests and hobbies. " +
+                      "Most endpoints require authentication via cookie-based session. " +
+                      "Use POST /api/Auth/login to authenticate first."
+    });
+
+    // Include XML comments in Swagger documentation
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    options.IncludeXmlComments(xmlPath);
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
+
+    // Enable Swagger UI in development
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Diversion API V1");
+        options.RoutePrefix = "swagger";
+    });
 }
 else
 {
@@ -80,4 +111,11 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// Map SignalR hubs
+app.MapHub<NotificationHub>("/hubs/notifications");
+app.MapHub<MessageHub>("/hubs/messages");
+
 app.Run();
+
+// Partial class for integration testing support
+public partial class Program { }

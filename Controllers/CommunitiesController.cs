@@ -15,11 +15,18 @@ namespace Diversion.Controllers
         private readonly DiversionDbContext _context = context;
 
         [HttpGet("public")]
-        public async Task<ActionResult<IEnumerable<CommunityDto>>> GetPublicCommunities()
+        public async Task<ActionResult<IEnumerable<CommunityDto>>> GetPublicCommunities(
+            [FromQuery] int skip = 0,
+            [FromQuery] int take = 50)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
+            // Limit maximum page size
+            if (take > 100)
+                take = 100;
+
             var communities = await _context.Communities
+                .AsNoTracking()
                 .Where(c => !c.IsPrivate)
                 .Select(c => new CommunityDto
                 {
@@ -42,6 +49,8 @@ namespace Diversion.Controllers
                     UserRole = c.Members.Where(m => m.UserId == userId).Select(m => m.Role).FirstOrDefault()
                 })
                 .OrderByDescending(c => c.CreatedAt)
+                .Skip(skip)
+                .Take(take)
                 .ToListAsync();
 
             return Ok(communities);
@@ -55,6 +64,7 @@ namespace Diversion.Controllers
                 return Unauthorized();
 
             var communities = await _context.CommunityMemberships
+                .AsNoTracking()
                 .Where(cm => cm.UserId == userId)
                 .Select(cm => new CommunityDto
                 {
@@ -88,6 +98,7 @@ namespace Diversion.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             var community = await _context.Communities
+                .AsNoTracking()
                 .Where(c => c.Id == id)
                 .Select(c => new CommunityDto
                 {
@@ -126,7 +137,7 @@ namespace Diversion.Controllers
 
             if (dto.InterestId.HasValue)
             {
-                var interestExists = await _context.Interests.AnyAsync(i => i.Id == dto.InterestId.Value);
+                var interestExists = await _context.Interests.AsNoTracking().AnyAsync(i => i.Id == dto.InterestId.Value);
                 if (!interestExists)
                     return BadRequest("Invalid interest ID");
             }
@@ -288,6 +299,7 @@ namespace Diversion.Controllers
                 return Forbid();
 
             var members = await _context.CommunityMemberships
+                .AsNoTracking()
                 .Where(cm => cm.CommunityId == id)
                 .Select(cm => new CommunityMembershipDto
                 {

@@ -20,6 +20,7 @@ public class NotificationsController(DiversionDbContext context) : ControllerBas
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         var recentNotifications = await _context.Notifications
+            .AsNoTracking()
             .Where(n => n.UserId == userId)
             .OrderByDescending(n => n.CreatedAt)
             .Take(20)

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Diversion.DTOs;
+using Diversion.Helpers;
 
 namespace Diversion.Controllers
 {
@@ -32,21 +33,8 @@ namespace Diversion.Controllers
 
             var searchTerm = $"%{query}%";
 
-            // Get list of blocked user IDs (bidirectional)
-            var blockedUserIds = await _context.UserBlocks
-                .Where(ub => ub.BlockerId == userId || ub.BlockedUserId == userId)
-                .Select(ub => ub.BlockerId == userId ? ub.BlockedUserId : ub.BlockerId)
-                .Distinct()
-                .ToListAsync();
-
-            // Get list of banned user IDs
-            var bannedUserIds = await _context.UserProfiles
-                .Where(up => up.IsBanned)
-                .Select(up => up.UserId)
-                .ToListAsync();
-
-            // Combine blocked and banned users
-            var excludedUserIds = blockedUserIds.Union(bannedUserIds).ToHashSet();
+            // Get blocked and banned user IDs
+            var excludedUserIds = await UserFilterHelper.GetExcludedUserIdsAsync(_context, userId);
 
             var results = new SearchResultsDto
             {
@@ -59,6 +47,7 @@ namespace Diversion.Controllers
             if (type == null || type.ToLower() == "events")
             {
                 results.Events = await _context.Events
+                    .AsNoTracking()
                     .Where(e =>
                         (EF.Functions.Like(e.Title, searchTerm) ||
                          EF.Functions.Like(e.Description, searchTerm) ||
@@ -99,6 +88,7 @@ namespace Diversion.Controllers
             if (type == null || type.ToLower() == "users")
             {
                 results.Users = await _context.UserProfiles
+                    .AsNoTracking()
                     .Where(up =>
                         (EF.Functions.Like(up.User.UserName ?? "", searchTerm) ||
                          (up.DisplayName != null && EF.Functions.Like(up.DisplayName, searchTerm)) ||
@@ -127,6 +117,7 @@ namespace Diversion.Controllers
             if (type == null || type.ToLower() == "communities")
             {
                 results.Communities = await _context.Communities
+                    .AsNoTracking()
                     .Where(c =>
                         (EF.Functions.Like(c.Name, searchTerm) ||
                          EF.Functions.Like(c.Description, searchTerm)) &&

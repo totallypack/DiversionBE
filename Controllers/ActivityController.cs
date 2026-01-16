@@ -16,6 +16,7 @@ namespace Diversion.Controllers
         private (string displayName, string profilePicUrl) GetUserProfile(string userId)
         {
             var profile = _context.UserProfiles
+                .AsNoTracking()
                 .Where(up => up.UserId == userId)
                 .Select(up => new { up.DisplayName, up.ProfilePicUrl })
                 .FirstOrDefault();
@@ -31,6 +32,7 @@ namespace Diversion.Controllers
                 return Unauthorized();
 
             var friendIds = await _context.Friendships
+                .AsNoTracking()
                 .Where(f => f.UserId == userId)
                 .Select(f => f.FriendId)
                 .ToListAsync();
@@ -41,6 +43,7 @@ namespace Diversion.Controllers
             var activities = new List<ActivityDto>();
 
             var events = await _context.Events
+                .AsNoTracking()
                 .Where(e => friendIds.Contains(e.OrganizerId) && e.CreatedAt >= DateTime.UtcNow.AddDays(-30))
                 .Include(e => e.Organizer)
                 .OrderByDescending(e => e.CreatedAt)
@@ -67,6 +70,7 @@ namespace Diversion.Controllers
             activities.AddRange(eventsCreated);
 
             var attendees = await _context.EventAttendees
+                .AsNoTracking()
                 .Where(ea => friendIds.Contains(ea.UserId) &&
                              ea.CreatedAt >= DateTime.UtcNow.AddDays(-30))
                 .Include(ea => ea.User)
@@ -96,6 +100,7 @@ namespace Diversion.Controllers
             activities.AddRange(eventRsvps);
 
             var userInterests = await _context.UserInterests
+                .AsNoTracking()
                 .Where(ui => friendIds.Contains(ui.UserId) && ui.CreatedAt >= DateTime.UtcNow.AddDays(-30))
                 .Include(ui => ui.User)
                 .Include(ui => ui.SubInterest)

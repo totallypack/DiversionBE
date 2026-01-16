@@ -19,6 +19,7 @@ namespace Diversion.Controllers
         private async Task<bool> IsUserAdminAsync(string userId)
         {
             var userProfile = await _context.UserProfiles
+                .AsNoTracking()
                 .FirstOrDefaultAsync(up => up.UserId == userId);
             return userProfile?.IsAdmin ?? false;
         }
@@ -34,6 +35,7 @@ namespace Diversion.Controllers
                 return Forbid();
 
             var reports = await _context.Reports
+                .AsNoTracking()
                 .Where(r => r.Status == ReportStatusConstants.Pending || r.Status == ReportStatusConstants.UnderReview)
                 .Select(r => new ReportDto
                 {
@@ -72,7 +74,7 @@ namespace Diversion.Controllers
             if (take > 100)
                 take = 100;
 
-            var query = _context.Reports.AsQueryable();
+            var query = _context.Reports.AsNoTracking();
 
             if (!string.IsNullOrWhiteSpace(status))
             {
@@ -209,7 +211,7 @@ namespace Diversion.Controllers
                 var result = new ReportDto
                 {
                     Id = report.Id,
-                    ReporterUsername = (await _context.Users.FindAsync(report.ReporterId))?.UserName ?? "",
+                    ReporterUsername = (await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == report.ReporterId))?.UserName ?? "",
                     ReportedEntityType = report.ReportedEntityType,
                     ReportedEntityId = report.ReportedEntityId,
                     ReportedUsername = report.ReportedUser?.UserName,
@@ -218,7 +220,7 @@ namespace Diversion.Controllers
                     Status = report.Status,
                     CreatedAt = report.CreatedAt,
                     ReviewedAt = report.ReviewedAt,
-                    ReviewedByAdminUsername = (await _context.Users.FindAsync(userId))?.UserName ?? "",
+                    ReviewedByAdminUsername = (await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId))?.UserName ?? "",
                     AdminNotes = report.AdminNotes
                 };
 
@@ -331,7 +333,7 @@ namespace Diversion.Controllers
             if (take > 100)
                 take = 100;
 
-            var query = _context.ModerationActions.AsQueryable();
+            var query = _context.ModerationActions.AsNoTracking();
 
             if (!string.IsNullOrWhiteSpace(targetUserId))
             {
@@ -371,17 +373,21 @@ namespace Diversion.Controllers
                 return Forbid();
 
             var pendingReportsCount = await _context.Reports
+                .AsNoTracking()
                 .CountAsync(r => r.Status == ReportStatusConstants.Pending);
 
             var underReviewReportsCount = await _context.Reports
+                .AsNoTracking()
                 .CountAsync(r => r.Status == ReportStatusConstants.UnderReview);
 
-            var totalReportsCount = await _context.Reports.CountAsync();
+            var totalReportsCount = await _context.Reports.AsNoTracking().CountAsync();
 
             var bannedUsersCount = await _context.UserProfiles
+                .AsNoTracking()
                 .CountAsync(up => up.IsBanned);
 
             var moderationActionsLast30Days = await _context.ModerationActions
+                .AsNoTracking()
                 .CountAsync(ma => ma.CreatedAt >= DateTime.UtcNow.AddDays(-30));
 
             return Ok(new
